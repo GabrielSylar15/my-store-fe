@@ -11,7 +11,7 @@
           <div class="md:w-1/2 p-8 rounded-lg">
             <h2 class="text-2xl text-center black mb-6">Đăng nhập</h2>
 
-            <form @submit.prevent="login">
+            <form @submit.prevent="authService.login">
               <input
                   type="text"
                   placeholder="Số điện thoại"
@@ -23,6 +23,7 @@
                   class="w-full mb-4 px-4 py-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
               />
               <button
+                  @click="authService.login"
                   type="submit"
                   class="w-full bg-lime-600 text-white py-2 rounded hover:bg-lime-700 transition"
               >
@@ -48,7 +49,7 @@
                 Facebook
               </button>
               <button
-                  @click="redirectToGoogleOAuth"
+                  @click="authService.redirectToGoogleOAuth"
                   class="flex items-center justify-center gap-2 flex-1 border border-gray-300 py-2 rounded hover:bg-gray-100 cursor-pointer">
                 <iconify-icon icon="logos:google-icon" width="20" height="20"></iconify-icon>
                 Google
@@ -66,25 +67,10 @@
   </div>
 </template>
 
-<script setup>
-const login = () => {
-  alert("Đăng nhập thành công");
-};
-const redirectToGoogleOAuth = () => {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  const redirectUri = encodeURIComponent(import.meta.env.VITE_GOOGLE_REDIRECT_URI);
-  const scope = encodeURIComponent("https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid");
-  const url = `https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=${redirectUri}&response_type=code&client_id=${clientId}&scope=${scope}&access_type=offline&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow`;
-  const width = 500;
-  const height = 600;
-  const left = (window.innerWidth - width) / 2;
-  const top = (window.innerHeight - height) / 2;
-
-  window.open(
-      url,
-      'GoogleOAuthPopup',
-      `width=${width},height=${height},top=${top},left=${left},resizable,scrollbars`
-  );
-
-};
+<script setup lang="ts">
+import {authService} from '@/services'
+import {onMounted} from "vue";
+onMounted(() => {
+  authService.loginWithGoogle()
+})
 </script>

@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import BuyerLogin from '@/components/users/BuyerLogin.vue'
+import BuyerLogin from '@/components/users/auth/BuyerLogin.vue'
 import NoAuthHeader from '@/components/NoAuthHeader.vue'
 import Footer from "@/components/Footer.vue";
 import {onMounted} from "vue";
