@@ -70,6 +70,7 @@
 <script setup lang="ts">
 import {authService} from '@/services'
 import {onMounted} from "vue";
+
 onMounted(() => {
   authService.loginWithGoogle()
 })

@@ -1,6 +1,6 @@
 <template>
-  <header class="shadow p-4">
-    <div class="flex items-center ml-[8%]">
+  <header class="max-w-7xl mx-auto px-4 py-10">
+    <div class="flex items-center">
       <iconify-icon
           icon="hugeicons:running-shoes"
           width="30"

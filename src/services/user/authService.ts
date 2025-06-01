@@ -1,4 +1,4 @@
-import {httpClient, setAccessToken} from '@/core';
+import { httpClient, setAccessToken } from '@/core';
 
 class AuthService {
     redirectToGoogleOAuth(): void {
@@ -27,10 +27,12 @@ class AuthService {
     }
 
     loginWithGoogle(): void {
-        window.addEventListener("message", (event) => {
-            if (event.data?.type === "google-auth-success") {
-                const accessToken = event.data.token;
-                setAccessToken({accessToken});
+        window.addEventListener("storage", (event) => {
+            if (event.key === "google-auth-success") {
+                const accessToken = event.newValue;
+                if (!accessToken) return;
+                localStorage.removeItem("google-auth-success");
+                setAccessToken({"token": accessToken });
                 const urlParams = new URLSearchParams(window.location.search);
                 window.location.href = urlParams.get("returnUrl") || "/";
             }
@@ -45,13 +47,8 @@ class AuthService {
 
         try {
             const response = await httpClient.get(`/api/v1/users/auth/callback?code=${code}`);
-            console.log(response);
-            if (window.opener) {
-                window.opener.postMessage({
-                    type: "google-auth-success",
-                    accessToken: response.data.token
-                }, "*");
-            }
+            const accessToken = response.data.token;
+            localStorage.setItem("google-auth-success", accessToken);
             window.close();
         } catch (error: any) {
             console.error("OAuth error:", error);
