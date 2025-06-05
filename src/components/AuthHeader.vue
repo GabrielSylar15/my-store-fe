@@ -1,6 +1,5 @@
 <template>
   <header class="bg-lime-600 text-white">
-    <!-- Top bar -->
     <div class="container mx-auto flex justify-between items-center py-2 px-4 max-w-7xl">
       <div class="flex space-x-4">
         <a href="#" class="hover:underline">Kênh Người Bán</a>
@@ -35,36 +34,39 @@
       </div>
     </div>
 
-    <!-- Logo + Search -->
-    <div class="container mx-auto flex justify-between items-center py-4 px-4 max-w-7xl">
-      <!-- Logo -->
-      <div class="flex items-center space-x-2">
-        <div class="flex items-center">
-          <iconify-icon
-              icon="hugeicons:running-shoes"
-              width="40"
-              height="40"
-              class="text-white"
-          ></iconify-icon>
-          <h1 class="text-2xl font-bold text-white ml-4">GIADE</h1>
+    <div class="container mx-auto max-w-7xl py-1 px-4">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+
+        <div class="flex items-center space-x-2">
+          <iconify-icon icon="hugeicons:running-shoes" width="40" height="40" class="text-white"></iconify-icon>
+          <h1 class="text-2xl font-bold text-white">GIADE</h1>
         </div>
-      </div>
 
-      <!-- Search -->
-      <div class="flex flex-1 mx-[90px] bg-white rounded">
-        <input
-            type="text"
-            placeholder="HÈ RỰC SẮC XINH - 45%"
-            class="flex-1 p-2 rounded-l-md border border-gray-300 focus:outline-none text-black"
-        />
-        <button class="text-white backdrop-grayscale-25 px-3.5">
-          <iconify-icon icon="material-symbols-light:search-rounded" width="28" height="28"></iconify-icon>
-        </button>
+        <div class="flex flex-col flex-1 max-w-[74%] min-w-[200px]">
+          <!-- Ô SEARCH -->
+          <div class="flex bg-white rounded border items-center">
+            <input
+                type="text"
+                placeholder="HÈ RỰC SẮC XINH - 45%"
+                class="flex-1 p-2 focus:outline-none text-black bg-transparent"
+            />
+            <button class="w-15 h-9 bg-lime-600 flex items-center justify-center hover:bg-lime-500 rounded">
+              <iconify-icon icon="material-symbols-light:search-rounded" width="20" height="20" class="text-white"></iconify-icon>
+            </button>
+          </div>
 
-      </div>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <span class="text-white text-xs cursor-pointer transition">Giày chạy bộ</span>
+            <span class="text-white px-2 text-xs cursor-pointer transition">Giày mùa hè</span>
+            <span class="text-white px-2 text-xs cursor-pointer transition">Flash Sale</span>
+          </div>
+        </div>
 
-      <div class="flex items-center space-x-2">
-        <iconify-icon icon="bx:cart" width="36" height="36"></iconify-icon>
+        <!-- BÊN PHẢI (Cart) -->
+        <div class="flex items-center">
+          <iconify-icon icon="bx:cart" width="36" height="36" class="text-white"></iconify-icon>
+        </div>
+
       </div>
     </div>
   </header>

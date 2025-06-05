@@ -1,11 +1,11 @@
 <script setup>
 
-import LoginHeader from "@/components/LoginHeader.vue";
+import AuthHeader from "@/components/AuthHeader.vue";
 import Footer from "@/components/Footer.vue";
 </script>
 
 <template>
-  <LoginHeader/>
+  <AuthHeader/>
   <Footer/>
 </template>
 

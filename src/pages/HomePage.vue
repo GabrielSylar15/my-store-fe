@@ -1,13 +1,14 @@
 <template>
-  <AuthHeader/>
-  <div class="flex items-center justify-center bg-lime-100">
+  <div class="overflow-x-auto min-w-[800px]">
+    <AuthHeader/>
+    <div class="flex items-center justify-center bg-lime-100">
 
+    </div>
+    <Footer/>
   </div>
-  <Footer/>
 </template>
 
 <script setup>
-import BuyerLogin from '@/components/users/auth/BuyerLogin.vue'
 import Footer from "@/components/Footer.vue";
 import {onMounted} from "vue";
 import AuthHeader from "@/components/AuthHeader.vue";
