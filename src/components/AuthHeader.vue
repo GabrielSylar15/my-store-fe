@@ -11,21 +11,41 @@
         <i class="ml-1 fab fa-instagram"></i>
       </div>
       <div class="flex space-x-4 items-center">
-        <a href="#" class="hover:underline relative">
-          <span class="absolute -top-1 -right-2 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-          <i class="fas fa-bell mr-1"></i> Thông Báo
-        </a>
+        <div class="flex items-center space-x-2 hover:cursor-pointer">
+          <!-- Vùng chứa icon chuông và badge -->
+          <div class="relative">
+            <span
+                class="absolute -top-1 -right-1 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-lime-600 font-bold">3</span>
+            <i class="fas fa-bell text-xl"></i>
+            <iconify-icon icon="line-md:bell-loop" width="24" height="24"></iconify-icon>
+          </div>
+          <span>Thông Báo</span>
+        </div>
+
         <a href="#" class="hover:underline"><i class="fas fa-question-circle mr-1"></i> Hỗ Trợ</a>
         <a href="#" class="hover:underline"><i class="fas fa-globe mr-1"></i> Tiếng Việt</a>
 
-        <!-- Dropdown User -->
-        <div class="relative" @mouseenter="showDropdown = true" @mouseleave="showDropdown = false">
-          <button class="flex items-center space-x-1 hover:underline">
-            <i class="fas fa-user-circle"></i>
+        <div
+            class="relative inline-block"
+            @mouseenter="showDropdown = true"
+            @mouseleave="showDropdown = false"
+        >
+          <!-- AVATAR + TÊN NGƯỜI DÙNG -->
+          <button class="flex items-center space-x-2 hover:underline px-2 py-1">
+            <img
+                src="https://i.pravatar.cc/32"
+                alt="Avatar"
+                class="w-6 h-6 rounded-full"
+            />
             <span>sylar1505</span>
             <i class="fas fa-chevron-down text-xs"></i>
           </button>
-          <div v-if="showDropdown" class="absolute right-0 mt-2 bg-white text-black rounded-md shadow-lg w-40 z-50">
+
+          <!-- DROPDOWN -->
+          <div
+              v-if="showDropdown"
+              class="absolute right-0 mt-2 bg-white text-black rounded-md shadow-lg w-40 z-50"
+          >
             <a href="#" class="block px-4 py-2 hover:bg-gray-100">Tài Khoản Của Tôi</a>
             <a href="#" class="block px-4 py-2 hover:bg-gray-100">Đơn Mua</a>
             <a href="#" class="block px-4 py-2 hover:bg-gray-100">Đăng Xuất</a>
@@ -48,10 +68,11 @@
             <input
                 type="text"
                 placeholder="HÈ RỰC SẮC XINH - 45%"
-                class="flex-1 p-2 focus:outline-none text-black bg-transparent"
+                class="flex-1 p-[3px] focus:outline-none text-black bg-transparent"
             />
             <button class="w-15 h-9 bg-lime-600 flex items-center justify-center hover:bg-lime-500 rounded">
-              <iconify-icon icon="material-symbols-light:search-rounded" width="20" height="20" class="text-white"></iconify-icon>
+              <iconify-icon icon="material-symbols-light:search-rounded" width="20" height="20"
+                            class="text-white"></iconify-icon>
             </button>
           </div>
 
@@ -62,8 +83,9 @@
           </div>
         </div>
 
-        <!-- BÊN PHẢI (Cart) -->
-        <div class="flex items-center">
+        <div class="relative flex items-center">
+          <span
+              class="absolute -top-1 -right-2 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-lime-600 font-bold">300</span>
           <iconify-icon icon="bx:cart" width="36" height="36" class="text-white"></iconify-icon>
         </div>
 
@@ -73,6 +95,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {ref} from 'vue'
+
 const showDropdown = ref(false)
 </script>
