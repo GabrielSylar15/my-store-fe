@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-lime-600 text-white">
+  <header class="bg-primary text-white">
     <div class="container mx-auto flex justify-between items-center py-2 px-4 max-w-7xl">
       <div class="flex space-x-4">
         <a href="#" class="hover:underline">Kênh Người Bán</a>
@@ -12,7 +12,6 @@
       </div>
       <div class="flex space-x-4 items-center">
         <div class="flex items-center space-x-2 hover:cursor-pointer">
-          <!-- Vùng chứa icon chuông và badge -->
           <div class="relative">
             <span
                 class="absolute -top-1 -right-1 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-lime-600 font-bold">3</span>
@@ -28,27 +27,26 @@
         <div
             class="relative inline-block"
             @mouseenter="showDropdown = true"
-            @mouseleave="showDropdown = false"
+            @mouseleave="showDropdown = true"
         >
-          <!-- AVATAR + TÊN NGƯỜI DÙNG -->
-          <button class="flex items-center space-x-2 hover:underline px-2 py-1">
-            <img
-                src="https://i.pravatar.cc/32"
-                alt="Avatar"
-                class="w-6 h-6 rounded-full"
-            />
+          <div class="flex items-center space-x-2 hover:underline px-1 py-1 cursor-pointer">
+            <img src="https://i.pravatar.cc/32" alt="Avatar" class="w-6 h-6 rounded-full"/>
             <span>sylar1505</span>
             <i class="fas fa-chevron-down text-xs"></i>
-          </button>
+          </div>
 
-          <!-- DROPDOWN -->
           <div
               v-if="showDropdown"
-              class="absolute right-0 mt-2 bg-white text-black rounded-md shadow-lg w-40 z-50"
+              class="absolute right-0 top-full pt-2 w-40 z-50"
           >
-            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Tài Khoản Của Tôi</a>
-            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Đơn Mua</a>
-            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Đăng Xuất</a>
+            <div
+                class="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white"></div>
+
+            <div class="bg-white text-black rounded-md shadow-lg">
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100 rounded-md">Tài Khoản Của Tôi</a>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100 rounded-md">Đơn Mua</a>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100 rounded-md">Đăng Xuất</a>
+            </div>
           </div>
         </div>
       </div>
@@ -63,14 +61,13 @@
         </div>
 
         <div class="flex flex-col flex-1 max-w-[74%] min-w-[200px]">
-          <!-- Ô SEARCH -->
           <div class="flex bg-white rounded border items-center">
             <input
                 type="text"
                 placeholder="HÈ RỰC SẮC XINH - 45%"
                 class="flex-1 p-[3px] focus:outline-none text-black bg-transparent"
             />
-            <button class="w-15 h-9 bg-lime-600 flex items-center justify-center hover:bg-lime-500 rounded">
+            <button class="w-15 h-9 bg-primary flex items-center justify-center hover:bg-lime-500 rounded">
               <iconify-icon icon="material-symbols-light:search-rounded" width="20" height="20"
                             class="text-white"></iconify-icon>
             </button>

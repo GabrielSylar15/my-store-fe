@@ -1,9 +1,9 @@
 <template>
   <div class="flex items-center justify-center bg-lime-100 w-full">
-    <div class="w-full px-0 py-15 bg-lime-600">
+    <div class="w-full px-0 py-15 bg-primary">
       <div class="flex justify-center items-center">
         <div class="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-lg">
-          <div class="md:w-1/2 bg-lime-600 p-8 flex flex-col justify-center items-center text-white">
+          <div class="md:w-1/2 bg-primary p-8 flex flex-col justify-center items-center text-white">
             <img src="/src/assets/logo_branch_3.png" alt="Logo" class="w-80 h-80"/>
             <p class="text-center text-2xl">Giày dép giá rẻ chất lượng cao</p>
           </div>
@@ -25,7 +25,7 @@
               <button
                   @click="authService.login"
                   type="submit"
-                  class="w-full bg-lime-600 text-white py-2 rounded hover:bg-lime-700 transition"
+                  class="w-full bg-primary text-white py-2 rounded hover:bg-lime-700 transition"
               >
                 ĐĂNG NHẬP
               </button>

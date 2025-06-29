@@ -10,6 +10,15 @@ interface Constructor {
     isLogout?: boolean;
 }
 
+export interface ApiResponse<T = unknown> {
+    success: boolean
+    error: boolean
+    data: T
+    statusCode?: number
+    message?: string
+    rawResponse?: AxiosResponse
+}
+
 export class HttpClient {
     baseURL: string;
     headers: any;
@@ -87,20 +96,20 @@ export class HttpClient {
         return this.transformError(err);
     }
 
-    private transformError(err: AxiosError<any, any>): any {
+    private transformError(err: AxiosError<any>): ApiResponse {
         const res = err.response;
         const resData = res?.data || {};
         return {
             success: false,
             error: true,
             data: resData.data,
-            statusCode: res?.status || err.code,
+            statusCode: res?.status,
             message: resData.message || err.message,
             rawResponse: res,
         };
     }
 
-    private transformResponse(res: AxiosResponse) {
+    private transformResponse(res: AxiosResponse): ApiResponse | AxiosResponse {
         if (this.isTransform) {
             return res;
         }
