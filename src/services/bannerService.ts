@@ -5,21 +5,12 @@ const CACHE_KEY = 'banner_thumbnails'
 
 export interface UseBannerSlider {
     thumbnails: Ref<string[]>
-    currentIndex: Ref<number>
     getImageUrl: (id: string) => string
     fetchThumbnails: () => Promise<void>
-    nextImage: () => void
-    prevImage: () => void
-    goToImage: (index: number) => void
-    startAutoSlide: () => void
-    stopAutoSlide: () => void
-    restartAutoSlide: () => void
 }
 
 export function useBannerSlider(): UseBannerSlider {
     const thumbnails = ref<string[]>([])
-    const currentIndex = ref<number>(0)
-    let autoSlideInterval: ReturnType<typeof setInterval> | null = null
 
     const getImageUrl = (id: string): string =>
         `https://drive.google.com/thumbnail?id=${id}&sz=w1920-h1080`
@@ -41,53 +32,9 @@ export function useBannerSlider(): UseBannerSlider {
         }
     }
 
-    const nextImage = (): void => {
-        currentIndex.value = (currentIndex.value + 1) % thumbnails.value.length
-        restartAutoSlide()
-    }
-
-    const prevImage = (): void => {
-        currentIndex.value =
-            (currentIndex.value - 1 + thumbnails.value.length) % thumbnails.value.length
-        restartAutoSlide()
-    }
-
-    const goToImage = (index: number): void => {
-        if (index >= 0 && index < thumbnails.value.length) {
-            currentIndex.value = index
-            restartAutoSlide()
-        }
-    }
-
-    const startAutoSlide = (): void => {
-        stopAutoSlide()
-        autoSlideInterval = setInterval(() => {
-            currentIndex.value = (currentIndex.value + 1) % thumbnails.value.length
-        }, 3000)
-    }
-
-    const stopAutoSlide = (): void => {
-        if (autoSlideInterval) {
-            clearInterval(autoSlideInterval)
-            autoSlideInterval = null
-        }
-    }
-
-    const restartAutoSlide = (): void => {
-        stopAutoSlide()
-        startAutoSlide()
-    }
-
     return {
         thumbnails,
-        currentIndex,
         getImageUrl,
-        fetchThumbnails,
-        nextImage,
-        prevImage,
-        goToImage,
-        startAutoSlide,
-        stopAutoSlide,
-        restartAutoSlide
+        fetchThumbnails
     }
 }

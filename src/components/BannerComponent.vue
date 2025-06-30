@@ -1,84 +1,116 @@
 <template>
-  <div class="relative w-full h-[400px] overflow-hidden bg-black rounded-lg">
-    <div v-if="thumbnails.length === 0" class="text-white text-center pt-20">Đang tải banner...</div>
+  <div class="w-full h-[400px] overflow-hidden bg-black">
+    <a-carousel :arrows="true" :autoplay="true" :autoplaySpeed="1500" :dots="true">
+      <template #prevArrow>
+        <div class="custom-slick-arrow" style="left: 10px; z-index: 1">
+          <left-circle-outlined/>
+        </div>
+      </template>
+      <template #nextArrow>
+        <div class="custom-slick-arrow" style="right: 10px">
+          <right-circle-outlined/>
+        </div>
+      </template>
 
-    <!-- Carousel wrapper -->
-    <div
-        v-else
-        class="w-full h-full"
-    >
-      <div
-          class="flex w-full h-full transition-transform duration-700 ease-in-out"
-          :style="`transform: translateX(-${currentIndex * 100}%)`"
-      >
-        <img
-            v-for="(thumbId, index) in thumbnails"
-            :key="index"
-            :src="getImageUrl(thumbId)"
-            alt="Banner"
-            class="w-full h-full object-cover flex-shrink-0"
-        />
-      </div>
+      <a-image
+          v-for="(thumbId, index) in thumbnails"
+          :key="index"
+          :src="getImageUrl(thumbId)"
+          alt="Banner"
+          class="image-slide"
+          :preview="false"
+          fit="cover"
+          height="400px"
+          width="100%"
+      />
 
-      <!-- Navigation buttons -->
-      <button
-          class="absolute top-1/2 left-4 transform -translate-y-1/2
-         bg-white/20 hover:bg-white/40 transition
-         px-2 py-4 shadow flex items-center justify-center
-         cursor-pointer"
-          @click="prevImage"
-      >
-        <iconify-icon icon="carbon:chevron-left" width="16" height="16"></iconify-icon>
-      </button>
-
-      <button
-          class="absolute top-1/2 right-4 transform -translate-y-1/2
-         bg-white/20 hover:bg-white/40 transition
-         px-2 py-4 shadow flex items-center justify-center
-         cursor-pointer"
-          @click="nextImage"
-      >
-        <iconify-icon icon="carbon:chevron-right" width="16" height="16"></iconify-icon>
-      </button>
-
-      <!-- Dots -->
-      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-        <span
-            v-for="(thumbId, index) in thumbnails"
-            :key="index"
-            class="w-3 h-3 rounded-full cursor-pointer transition-colors"
-            :class="currentIndex === index ? 'bg-primary' : 'bg-white opacity-50'"
-            @click="goToImage(index)"
-        ></span>
-      </div>
-    </div>
+    </a-carousel>
   </div>
 </template>
-<script setup lang="ts">
-import {onBeforeUnmount, onMounted} from 'vue'
+
+<script lang="ts" setup>
+import {LeftCircleOutlined, RightCircleOutlined} from '@ant-design/icons-vue';
+import {onMounted} from 'vue';
 import {useBannerSlider} from '@/services/bannerService'
 
 const {
   thumbnails,
-  currentIndex,
   getImageUrl,
   fetchThumbnails,
-  nextImage,
-  prevImage,
-  goToImage,
-  startAutoSlide,
-  stopAutoSlide,
-  restartAutoSlide
 } = useBannerSlider()
 
 onMounted(() => {
   fetchThumbnails()
-  startAutoSlide()
 })
 
-onBeforeUnmount(() => {
-  stopAutoSlide()
-})
 </script>
+<style scoped>
+/*noinspection CssUnusedSymbol*/
+:deep(.ant-image-img) {
+  object-fit: cover;
+}
 
+/*noinspection CssUnusedSymbol*/
+:deep(.slick-slide) {
+  text-align: center;
+  height: 400px;
+  line-height: 400px;
+  background: #364d79;
+  overflow: hidden;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/*noinspection CssUnusedSymbol*/
+:deep(.slick-arrow.custom-slick-arrow) {
+  width: 25px;
+  height: 25px;
+  font-size: 25px;
+  color: #fff;
+  background-color: rgba(31, 45, 61, 0.11);
+  transition: ease all 0.3s;
+  opacity: 0.3;
+  z-index: 1;
+}
+
+/*noinspection CssUnusedSymbol*/
+:deep(.slick-arrow.custom-slick-arrow:before) {
+  display: none;
+}
+
+/*noinspection CssUnusedSymbol*/
+:deep(.slick-arrow.custom-slick-arrow:hover) {
+  color: #fff;
+  opacity: 0.5;
+}
+
+:deep(.slick-dots li button) {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #fff;
+  opacity: 0.5;
+  border: none;
+}
+
+:deep(.slick-dots li.slick-active button) {
+  opacity: 1;
+  background-color: #1890ff;
+}
+
+/*noinspection CssUnusedSymbol*/
+:deep(.slick-slide) {
+  text-align: center;
+  height: 400px;
+  line-height: 400px;
+  background: #364d79;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+</style>
 
