@@ -6,68 +6,80 @@
     <div v-else-if="error" class="text-red-500">Lỗi: {{ error.message }}</div>
 
     <div class="relative overflow-hidden">
-      <!-- Slider wrapper -->
       <div
-          class="flex transition-transform duration-1500 ease-in-out"
+          class="flex transition-transform ease-in-out"
+          :class="`duration-${timeSlide}`"
           :style="{
-          transform: `translateX(-${(currentPage - 1) * 100}%)`
-
+          transform: `translateX(-${(currentPage - 1) * 100 / transformIndex}%)`
         }"
       >
-        <!-- Mỗi page là 1 grid -->
+
         <div
             v-for="(page, index) in paginatedCategories"
             :key="index"
-            class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10 shrink-0"
+            class="shrink-0 max-w-7xl w-full flex flex-col"
         >
-          <div
-              v-for="category in page"
-              :key="category.id"
-              class="group bg-white shadow-sm hover:shadow-md cursor-pointer overflow-hidden transition"
-          >
-            <img
-                v-if="category.image"
-                :src="getImageUrl(category.image)"
-                alt="Ảnh danh mục"
-                class="w-full h-20 object-cover"
-            />
-            <div class="p-2">
-              <h3 class="text-sm font-medium text-gray-800 text-center break-words">
-                {{ category.name }}
-              </h3>
-              <p class="relative text-[10px] text-gray-500 text-center line-clamp-1">
-                {{ category.description }}
-                <span
-                    class="absolute z-10 hidden group-hover:flex bg-black text-white text-xs rounded px-2 py-1
-                    whitespace-normal max-w-[200px] left-full top-1/2 -translate-y-1/2 ml-2 shadow-lg"
-                >
-                  {{ category.description }}
-                </span>
-              </p>
+          <!-- Hàng trên: index chẵn -->
+          <div class="grid grid-cols-10">
+            <div
+                v-for="category in page.filter((_, idx) => idx % 2 === 0)"
+                :key="category.id"
+                class="group bg-white shadow-sm hover:shadow-md overflow-hidden transition"
+            >
+              <img
+                  v-if="category.image"
+                  :src="getImageUrl(category.image)"
+                  alt="Ảnh danh mục"
+                  class="h-20 mx-auto"
+              />
+              <div class="p-2">
+                <h3 class="text-sm text-gray-800 text-center truncate" :title="category.name">
+                  {{ category.name }}
+                </h3>
+              </div>
             </div>
           </div>
+
+          <div class="grid grid-cols-10">
+            <div
+                v-for="category in page.filter((_, idx) => idx % 2 === 1)"
+                :key="category.id"
+                class="group bg-white shadow-sm hover:shadow-md overflow-hidden transition"
+            >
+              <img
+                  v-if="category.image"
+                  :src="getImageUrl(category.image)"
+                  alt="Ảnh danh mục"
+                  class="h-20 mx-auto"
+              />
+              <div class="p-2">
+                <h3 class="text-sm text-gray-800 text-center truncate" :title="category.name">
+                  {{ category.name }}
+                </h3>
+              </div>
+            </div>
+          </div>
+
         </div>
+
       </div>
 
-      <!-- Không có danh mục -->
-      <div v-if="!categories.length && !isLoading" class="text-center text-gray-500 py-4">
+      <div v-if="!categories.length && !isLoading" class="text-center text-gray-500">
         Không có danh mục nào để hiển thị.
       </div>
 
-      <!-- Nút trái -->
       <button
           v-if="currentPage > 1"
           @click="prevPage"
-          class="absolute top-1/2 -translate-y-1/2 left-[-16px] bg-white shadow p-2 z-10"
+          class="absolute top-1/2 -translate-y-1/2 left-[-12px] border-0 shadow p-2 z-10 flex items-center justify-center cursor-pointer"
       >
         <iconify-icon icon="carbon:chevron-left" width="20" height="20"/>
       </button>
 
-      <!-- Nút phải -->
       <button
           v-if="hasNext"
           @click="nextPage"
-          class="absolute top-1/2 -translate-y-1/2 right-[-16px] bg-white shadow p-2 z-10"
+          class="absolute top-1/2 -translate-y-1/2 right-[-12px] border-0 shadow p-2 z-10 flex items-center justify-center cursor-pointer"
       >
         <iconify-icon icon="carbon:chevron-right" width="20" height="20"/>
       </button>
@@ -84,10 +96,10 @@ const categories = ref<Category[]>([])
 const isLoading = ref(false)
 const error = ref<Error | null>(null)
 
-const pageSize = 20 // mỗi page có 20 danh mục
+const timePerCol = 150
+const pageSize = 20
 const currentPage = ref(1)
 
-// Phân chia danh sách thành từng "trang"
 const paginatedCategories = computed(() => {
   const pages: Category[][] = []
   for (let i = 0; i < categories.value.length; i += pageSize) {
@@ -99,6 +111,19 @@ const paginatedCategories = computed(() => {
 const totalPages = computed(() => paginatedCategories.value.length)
 const hasNext = computed(() => currentPage.value < totalPages.value)
 const hasPrev = computed(() => currentPage.value > 1)
+const transformIndex = computed(() => {
+  const nextPageIndex = pageSize * currentPage.value;
+
+  const nextPageItemsCount = nextPageIndex >= categories.value.length
+      ? categories.value.length - pageSize * (currentPage.value - 1)
+      : pageSize;
+
+  return nextPageItemsCount > 0 ? 10 / Math.ceil(nextPageItemsCount / 2) : 0;
+});
+
+const timeSlide = computed(() => {
+  return transformIndex.value * timePerCol;
+});
 
 const nextPage = () => {
   if (hasNext.value) currentPage.value++
@@ -108,7 +133,7 @@ const prevPage = () => {
 }
 
 const getImageUrl = (id: string) =>
-    `https://drive.google.com/thumbnail?id=${id}&sz=w400`
+    `https://drive.google.com/thumbnail?id=${id}`
 
 const loadCategories = async () => {
   isLoading.value = true
