@@ -58,7 +58,7 @@
 
             <p class="mt-6 text-center text-sm text-gray-500">
               Bạn mới biết đến GIADE?
-              <a href="#" class="text-lime-600 font-semibold">Đăng ký</a>
+              <a href="#" class="text-primary font-semibold">Đăng ký</a>
             </p>
           </div>
         </div>

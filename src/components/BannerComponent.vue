@@ -97,7 +97,7 @@ onMounted(() => {
 
 :deep(.slick-dots li.slick-active button) {
   opacity: 1;
-  background-color: #1890ff;
+  background-color: var(--color-primary);
 }
 
 /*noinspection CssUnusedSymbol*/

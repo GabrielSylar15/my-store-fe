@@ -14,7 +14,7 @@
         <div class="flex items-center space-x-2 hover:cursor-pointer">
           <div class="relative">
             <span
-                class="absolute -top-1 -right-1 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-lime-600 font-bold">3</span>
+                class="absolute -top-1 -right-1 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-primary font-bold">3</span>
             <i class="fas fa-bell text-xl"></i>
             <iconify-icon icon="line-md:bell-loop" width="24" height="24"></iconify-icon>
           </div>
@@ -82,7 +82,7 @@
 
         <div class="relative flex items-center">
           <span
-              class="absolute -top-1 -right-2 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-lime-600 font-bold">300</span>
+              class="absolute -top-1 -right-2 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-primary font-bold">300</span>
           <iconify-icon icon="bx:cart" width="36" height="36" class="text-white"></iconify-icon>
         </div>
 

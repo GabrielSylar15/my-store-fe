@@ -1,8 +1,8 @@
 <template>
   <div class="bg-background-component">
-    <h2 class="text-lg font-500 pl-6 py-3">Danh mục</h2>
+    <h2 class="text-lg font-500 pl-6 py-3 text-primary">Tìm kiếm hàng đầu</h2>
 
-    <div v-if="isLoading" class="text-gray-500">Đang tải danh mục...</div>
+    <div v-if="isLoading" class="text-gray-500">Đang tải sản phẩm`...</div>
     <div v-else-if="error" class="text-red-500">Lỗi: {{ error.message }}</div>
 
     <div class="relative overflow-hidden">
@@ -91,6 +91,9 @@
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue'
 import {Category, categoryService} from '@/services/product/categoryService'
+import {Product, productService} from '@/services/product/productService'
+
+const products = ref<Product[]>([])
 
 const categories = ref<Category[]>([])
 const isLoading = ref(false)
