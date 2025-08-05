@@ -1,11 +1,11 @@
 <template>
   <div class="bg-background-component">
-    <h2 class="text-lg font-500 pl-6 py-3">Danh mục</h2>
+    <h2 class="text-lg font-500 pl-6 py-3">DANH MỤC</h2>
 
     <div v-if="isLoading" class="text-gray-500">Đang tải danh mục...</div>
     <div v-else-if="error" class="text-red-500">Lỗi: {{ error.message }}</div>
 
-    <div class="relative overflow-hidden">
+    <div class="relative overflow-hidden border-t-1 border-t-gray-200">
       <div
           class="flex transition-transform ease-in-out"
           :class="`duration-${timeSlide}`"
@@ -24,7 +24,7 @@
             <div
                 v-for="category in page.filter((_, idx) => idx % 2 === 0)"
                 :key="category.id"
-                class="group bg-white shadow-sm hover:shadow-md overflow-hidden transition"
+                class="group bg-white hover:shadow-lg cursor-pointer overflow-hidden transition"
             >
               <img
                   v-if="category.image"
@@ -44,7 +44,7 @@
             <div
                 v-for="category in page.filter((_, idx) => idx % 2 === 1)"
                 :key="category.id"
-                class="group bg-white shadow-sm hover:shadow-md overflow-hidden transition"
+                class="group bg-white hover:shadow-lg cursor-pointer overflow-hidden transition"
             >
               <img
                   v-if="category.image"
@@ -71,22 +71,21 @@
       <button
           v-if="currentPage > 1"
           @click="prevPage"
-          class="absolute top-1/2 -translate-y-1/2 left-[-12px] border-0 shadow p-2 z-10 flex items-center justify-center cursor-pointer"
+          class="absolute top-1/2 -translate-y-1/2 left-[10px] border-2 border-background-page shadow p-1 z-10 flex items-center justify-center cursor-pointer rounded-full"
       >
-        <iconify-icon icon="carbon:chevron-left" width="20" height="20"/>
+        <iconify-icon icon="carbon:chevron-left" width="13" height="13"/>
       </button>
 
       <button
           v-if="hasNext"
           @click="nextPage"
-          class="absolute top-1/2 -translate-y-1/2 right-[-12px] border-0 shadow p-2 z-10 flex items-center justify-center cursor-pointer"
+          class="absolute top-1/2 -translate-y-1/2 right-[10px] border-2 border-background-page shadow p-1 z-10 flex items-center justify-center cursor-pointer rounded-full"
       >
-        <iconify-icon icon="carbon:chevron-right" width="20" height="20"/>
+        <iconify-icon icon="carbon:chevron-right" width="13" height="13"/>
       </button>
     </div>
   </div>
 </template>
-
 
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue'

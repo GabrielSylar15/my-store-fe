@@ -1,11 +1,13 @@
 <template>
   <div class="bg-background-component">
-    <h2 class="text-lg font-500 pl-6 py-3 text-primary">Tìm kiếm hàng đầu</h2>
-
-    <div v-if="isLoading" class="text-gray-500">Đang tải sản phẩm`...</div>
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-500 pl-6 py-3 text-primary">TÌM KIẾM HÀNG ĐẦU</h2>
+      <h2 class="text-sm font-500 pl-6 pr-3 text-primary">Xem Tất Cả ></h2>
+    </div>
+    <div v-if="isLoading" class="text-gray-500">Đang tải sản phẩm...</div>
     <div v-else-if="error" class="text-red-500">Lỗi: {{ error.message }}</div>
 
-    <div class="relative overflow-hidden">
+    <div class="relative overflow-hidden border-t-1 border-t-gray-200">
       <div
           class="flex transition-transform ease-in-out"
           :class="`duration-${timeSlide}`"
@@ -13,115 +15,101 @@
           transform: `translateX(-${(currentPage - 1) * 100 / transformIndex}%)`
         }"
       >
-
-        <div
-            v-for="(page, index) in paginatedCategories"
-            :key="index"
-            class="shrink-0 max-w-7xl w-full flex flex-col"
-        >
-          <!-- Hàng trên: index chẵn -->
-          <div class="grid grid-cols-10">
+        <div class="shrink-0 max-w-7xl w-full flex flex-col"
+               v-for="(page, index) in paginatedProducts"
+               :key="index">
+            <div :class="['grid', `grid-cols-${colNum}`]"
+               v-for="i in colNum"
+               :key="i">
             <div
-                v-for="category in page.filter((_, idx) => idx % 2 === 0)"
-                :key="category.id"
-                class="group bg-white shadow-sm hover:shadow-md overflow-hidden transition"
+                v-for="product in page.filter((_, idx) => idx % rowNum === i - 1)"
+                :key="product.id"
+                class="group bg-white hover:shadow-lg cursor-pointer overflow-hidden transition"
             >
               <img
-                  v-if="category.image"
-                  :src="getImageUrl(category.image)"
-                  alt="Ảnh danh mục"
-                  class="h-20 mx-auto"
+                  v-if="product.images?.[0]?.url"
+                  :src="getImageUrl(product.images[0].url)"
+                  alt="Ảnh sản phẩm"
+                  class="h-[180px] mx-auto"
               />
               <div class="p-2">
-                <h3 class="text-sm text-gray-800 text-center truncate" :title="category.name">
-                  {{ category.name }}
+                <h3 class="text-[16px] text-gray-800" :title="product.name">
+                  {{ product.name }}
                 </h3>
               </div>
             </div>
           </div>
-
-          <div class="grid grid-cols-10">
-            <div
-                v-for="category in page.filter((_, idx) => idx % 2 === 1)"
-                :key="category.id"
-                class="group bg-white shadow-sm hover:shadow-md overflow-hidden transition"
-            >
-              <img
-                  v-if="category.image"
-                  :src="getImageUrl(category.image)"
-                  alt="Ảnh danh mục"
-                  class="h-20 mx-auto"
-              />
-              <div class="p-2">
-                <h3 class="text-sm text-gray-800 text-center truncate" :title="category.name">
-                  {{ category.name }}
-                </h3>
-              </div>
-            </div>
-          </div>
-
         </div>
 
       </div>
 
-      <div v-if="!categories.length && !isLoading" class="text-center text-gray-500">
-        Không có danh mục nào để hiển thị.
+      <div v-if="!products.length && !isLoading" class="text-center text-gray-500">
+        Không có sản phẩm nào để hiển thị.
       </div>
 
       <button
           v-if="currentPage > 1"
           @click="prevPage"
-          class="absolute top-1/2 -translate-y-1/2 left-[-12px] border-0 shadow p-2 z-10 flex items-center justify-center cursor-pointer"
+          class="absolute top-1/2 -translate-y-1/2 left-[10px] border-2
+          border-background-page
+           shadow p-1 z-10 flex
+           items-center justify-center
+           cursor-pointer rounded-full"
       >
-        <iconify-icon icon="carbon:chevron-left" width="20" height="20"/>
+        <iconify-icon icon="carbon:chevron-left" width="13" height="13"/>
       </button>
 
       <button
           v-if="hasNext"
           @click="nextPage"
-          class="absolute top-1/2 -translate-y-1/2 right-[-12px] border-0 shadow p-2 z-10 flex items-center justify-center cursor-pointer"
+          class="absolute top-1/2 -translate-y-1/2 right-[10px] border-2
+           border-background-page
+           shadow
+           p-1 z-10
+           flex items-center
+           justify-center
+           cursor-pointer
+           rounded-full"
       >
-        <iconify-icon icon="carbon:chevron-right" width="20" height="20"/>
+        <iconify-icon icon="carbon:chevron-right" width="13" height="13"/>
       </button>
     </div>
   </div>
 </template>
 
-
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue'
-import {Category, categoryService} from '@/services/product/categoryService'
 import {Product, productService} from '@/services/product/productService'
 
 const products = ref<Product[]>([])
-
-const categories = ref<Category[]>([])
 const isLoading = ref(false)
 const error = ref<Error | null>(null)
 
 const timePerCol = 150
-const pageSize = 20
+const colNum = 6;
+const rowNum = products.value.length > colNum ? 2 : 1;
+const pageSize = colNum * rowNum;
 const currentPage = ref(1)
 
-const paginatedCategories = computed(() => {
-  const pages: Category[][] = []
-  for (let i = 0; i < categories.value.length; i += pageSize) {
-    pages.push(categories.value.slice(i, i + pageSize))
+const paginatedProducts = computed(() => {
+  const pages: Product[][] = []
+  for (let i = 0; i < products.value.length; i += pageSize) {
+    pages.push(products.value.slice(i, i + pageSize))
   }
   return pages
 })
 
-const totalPages = computed(() => paginatedCategories.value.length)
+const totalPages = computed(() => paginatedProducts.value.length)
 const hasNext = computed(() => currentPage.value < totalPages.value)
 const hasPrev = computed(() => currentPage.value > 1)
 const transformIndex = computed(() => {
   const nextPageIndex = pageSize * currentPage.value;
 
-  const nextPageItemsCount = nextPageIndex >= categories.value.length
-      ? categories.value.length - pageSize * (currentPage.value - 1)
+  const nextPageItemsCount = nextPageIndex >= products.value.length
+      ? products.value.length - pageSize * (currentPage.value - 1)
       : pageSize;
 
-  return nextPageItemsCount > 0 ? 10 / Math.ceil(nextPageItemsCount / 2) : 0;
+  return nextPageItemsCount > 0 ? colNum / Math.ceil(nextPageItemsCount / rowNum) : 0;
 });
 
 const timeSlide = computed(() => {
@@ -138,10 +126,13 @@ const prevPage = () => {
 const getImageUrl = (id: string) =>
     `https://drive.google.com/thumbnail?id=${id}`
 
-const loadCategories = async () => {
+const loadProducts = async () => {
   isLoading.value = true
   try {
-    categories.value = await categoryService.fetchAll()
+    products.value = await productService.fetchByCondition({
+      "suggestion_type": "hot search",
+      "limit": 36
+    });
   } catch (err: any) {
     error.value = err
   } finally {
@@ -149,5 +140,5 @@ const loadCategories = async () => {
   }
 }
 
-onMounted(loadCategories)
+onMounted(loadProducts)
 </script>
