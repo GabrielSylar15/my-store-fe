@@ -18,7 +18,7 @@
         <div class="shrink-0 max-w-7xl w-full flex flex-col"
                v-for="(page, index) in paginatedProducts"
                :key="index">
-            <div :class="['grid', `grid-cols-${colNum}`]"
+            <div :class="['grid', `grid-cols-6`]"
                v-for="i in colNum"
                :key="i">
             <div
@@ -130,7 +130,7 @@ const loadProducts = async () => {
   isLoading.value = true
   try {
     products.value = await productService.fetchByCondition({
-      "suggestion_type": "hot search",
+      // "suggestion_type": "hot search",
       "limit": 36
     });
   } catch (err: any) {

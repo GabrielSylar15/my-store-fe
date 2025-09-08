@@ -65,7 +65,7 @@
             <input
                 type="text"
                 placeholder="HÈ RỰC SẮC XINH - 45%"
-                class="flex-1 p-[3px] focus:outline-none text-black bg-transparent"
+                class="flex-1 pl-[8px] focus:outline-none text-black bg-transparent"
             />
             <button class="w-15 h-9 bg-primary flex items-center justify-center hover:bg-lime-500 rounded">
               <iconify-icon icon="material-symbols-light:search-rounded" width="20" height="20"

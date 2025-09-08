@@ -13,6 +13,9 @@
       <div class="pb-6">
         <HotSearchProduct/>
       </div>
+      <div class="pb-6">
+        <ProductSuggestion/>
+      </div>
     </div>
 
     <Footer/>
@@ -27,6 +30,7 @@ import AuthHeader from "@/components/AuthHeader.vue";
 import BannerComponent from "@/components/BannerComponent.vue";
 import CategoryList from "@/components/inventory/CategoryList.vue";
 import HotSearchProduct from "@/components/inventory/HotSearchProduct.vue";
+import ProductSuggestion from "@/components/inventory/ProductSuggestion.vue";
 
 onMounted(() => {
   document.title = "Đăng nhập tài khoản - Mua sắm online | GIADE"
