@@ -21,6 +21,6 @@ import AuthHeader from "@/components/AuthHeader.vue";
 import ProductSearchList from "@/components/inventory/ProductSearchList.vue";
 
 onMounted(() => {
-  document.title = "Đăng nhập tài khoản - Mua sắm online | GIADE"
+  document.title = "Tìm kiếm sản phẩm - Mua sắm online | GIADE"
 })
 </script>

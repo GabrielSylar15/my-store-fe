@@ -133,14 +133,21 @@
         </div>
 
         <!-- GRID -->
-        <div class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-5 gap-3">
-          <ProductCard
-              v-for="p in paged"
-              :key="p.id"
-              :product="p"
-              @click="goDetail(p)"
-          />
-        </div>
+        <a-spin :spinning="loading" tip="Đang tải...">
+          <!-- Khi loading: Skeleton lưới -->
+          <div v-if="loading" class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-5 gap-3">
+            <ProductCardSkeleton v-for="i in pageSize" :key="'sk-'+i"/>
+          </div>
+
+          <div v-else-if="paged.length" class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-5 gap-3">
+            <ProductCard
+                v-for="p in paged"
+                :key="p.id"
+                :product="p"
+                @click="goDetail(p)"
+            />
+          </div>
+        </a-spin>
 
         <!-- PAGINATION (BOTTOM) -->
         <div class="flex justify-end mt-5">
@@ -157,14 +164,17 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {message} from 'ant-design-vue'
 import ProductCard from "@/components/inventory/ProductCard.vue";
 import {Category, categoryService} from "@/services/product/categoryService";
-import {Product, productService} from "@/services/product/productService";
+import {FetchProductCondition, Product, productService} from "@/services/product/productService";
+import {useSearchStore} from '@/stores/searchStore'
+import {useRoute} from "vue-router";
+import ProductCardSkeleton from "@/components/inventory/ProductCardSkeleton.vue";
 
 const products = ref<Product[]>([])
-
+const loading = ref(false)            // <<-- NEW
 const categories = ref<Category[]>([])
 const priceFromInput = ref<string>('')   // text ở ô input
 const priceToInput = ref<string>('')   // text ở ô input
@@ -173,6 +183,7 @@ const priceMax = ref<number | null>(null)
 
 const sortKey = ref<'Liên Quan' | 'Mới Nhất' | 'Bán Chạy' | 'Giá'>('Liên Quan')
 const priceOrder = ref<'asc' | 'desc' | null>(null)
+let reqSeq = 0
 
 const filtered = computed(() => {
   // chỗ này bạn cắm điều kiện filter thực sự (theo sidebar)
@@ -185,10 +196,11 @@ const ordered = computed(() => {
     out.sort((a, b) => priceOrder.value === 'asc' ? a.price_info.current_price - b.price_info.current_price : b.price_info.current_price - a.price_info.current_price)
     return out
   }
-  // demo: mặc định giữ thứ tự mock
   return out
 })
 
+const route = useRoute()
+const store = useSearchStore()
 const page = ref(1)
 const pageSize = 12
 const paged = computed(() => {
@@ -213,10 +225,22 @@ const loadCategories = async () => {
   }
 }
 
-const loadProducts = async () => {
+const loadProducts = async (condition: FetchProductCondition = {}) => {
+  const seq = ++reqSeq                 // đánh dấu request hiện tại
+  loading.value = true
   try {
-    products.value = await productService.fetchByCondition()
+    const res = await productService.fetchByCondition(condition)
+    if (seq === reqSeq) {              // chỉ nhận kết quả mới nhất
+      products.value = res
+    }
   } catch (err: any) {
+    if (seq === reqSeq) {
+      message.error('Không tải được danh sách sản phẩm')
+    }
+  } finally {
+    if (seq === reqSeq) {
+      loading.value = false
+    }
   }
 }
 
@@ -231,7 +255,7 @@ const ratingAtLeast = ref<number | null>(null)
 // Parse số từ chuỗi "₫", dấu chấm,… -> số nguyên VND
 function parseVnd(s: string): number | null {
   if (!s) return null
-  const n = Number(s.replace(/[^\d]/g, ''))
+  const n = Number(s.replace(/\D/g, ''))
   return Number.isFinite(n) ? n : null
 }
 
@@ -268,18 +292,32 @@ function clearRating() {
   page.value = 1
 }
 
+watch(
+    () => route.query.text,
+    (t) => {
+      const q = (t as string) || ''
+      loadProducts({text: q || undefined})
+      // đồng bộ về store nếu bạn muốn
+      if (q !== store.text) store.setText(q)
+    },
+    {immediate: true}
+)
+
 onMounted(async () => {
+  const qp = route.query.text
+  const fromUrl = Array.isArray(qp) ? qp[0] : (qp as string) || ''
+
+  if (fromUrl && fromUrl !== store.text) {
+    store.setText(fromUrl)
+  }
+
   await Promise.all([
     loadCategories(),
-    loadProducts()
-  ]);
+    loadProducts({text: fromUrl || store.text || undefined}) // truyền STRING, không phải ref
+  ])
 })
 </script>
 
-<script lang="ts">
-
-export default {}
-</script>
 <style scoped>
 /*noinspection CssUnusedSymbol*/
 :deep(.ant-topalign.ant-checkbox-wrapper) {

@@ -37,7 +37,7 @@ export interface Product {
 }
 
 
-interface FetchProductCondition {
+export interface FetchProductCondition {
     category_id?: number;
     text?: string;
     order?: string;

@@ -55,7 +55,7 @@
     <div class="container mx-auto max-w-7xl py-1 px-4">
       <div class="flex items-start justify-between gap-4 flex-wrap">
 
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 cursor-pointer" @click="router.push({path: '/'})">
           <iconify-icon icon="hugeicons:running-shoes" width="40" height="40" class="text-white"></iconify-icon>
           <h1 class="text-2xl font-bold text-white">GIADE</h1>
         </div>
@@ -64,10 +64,13 @@
           <div class="flex bg-white rounded border items-center">
             <input
                 type="text"
+                v-model="q"
                 placeholder="HÈ RỰC SẮC XINH - 45%"
                 class="flex-1 pl-[8px] focus:outline-none text-black bg-transparent"
+                @keyup.enter="onSearch"
             />
-            <button class="w-15 h-9 bg-primary flex items-center justify-center hover:bg-lime-500 rounded">
+            <button class="w-15 h-9 bg-primary flex items-center justify-center hover:active:bg-primary-100:5 rounded cursor-pointer"
+                    @click="onSearch">
               <iconify-icon icon="material-symbols-light:search-rounded" width="20" height="20"
                             class="text-white"></iconify-icon>
             </button>
@@ -91,8 +94,38 @@
   </header>
 </template>
 
-<script setup>
-import {ref} from 'vue'
+<script setup lang="ts">
+import {computed, onMounted, ref} from "vue";
+import {useRoute, useRouter} from 'vue-router'
+import {useSearchStore} from '@/stores/searchStore'
 
 const showDropdown = ref(false)
+const router = useRouter()
+const route = useRoute()
+const searchStore = useSearchStore()
+
+const q = computed({
+  get: () => searchStore.text,
+  set: (v: string) => searchStore.setText(v ?? '')
+})
+
+onMounted(() => {
+  // nếu vào /product?text=... -> đồng bộ vào store để input hiển thị
+  const fromUrl = (route.query.text as string) || ''
+  if (fromUrl && fromUrl !== searchStore.text) {
+    searchStore.setText(fromUrl)
+  }
+})
+
+const onSearch = () => {
+  const text = (searchStore.text ?? '').trim()
+  searchStore.setText(text)
+
+  if (route.path !== '/product') {
+    router.push({path: '/product', query: text ? {text} : {}})
+  } else {
+    // đang ở /product thì cập nhật query để URL khớp (không reload)
+    router.replace({path: '/product', query: text ? {text} : {}})
+  }
+}
 </script>
