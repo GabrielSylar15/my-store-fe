@@ -38,13 +38,13 @@ export interface Product {
 
 
 export interface FetchProductCondition {
-    category_id?: number;
+    category_ids?: number[];
     text?: string;
     order?: string;
     by?: string;
     limit?: number;
-    price_from?: number;
-    price_to?: number;
+    price_from?: number | null;
+    price_to?: number | null;
     suggestion_type?: string;
     suggested_param?: {
         product_id?: number;

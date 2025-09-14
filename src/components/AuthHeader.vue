@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from 'vue-router'
 import {useSearchStore} from '@/stores/searchStore'
 
@@ -116,6 +116,15 @@ onMounted(() => {
     searchStore.setText(fromUrl)
   }
 })
+
+watch(
+    () => route.query.text,
+    (t) => {
+      const next = (t as string) ?? ''
+      if (next !== searchStore.text) searchStore.setText(next)
+    },
+    { immediate: true } // chạy ngay lần đầu để fill input khi load trang
+)
 
 const onSearch = () => {
   const text = (searchStore.text ?? '').trim()

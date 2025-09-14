@@ -17,6 +17,8 @@
                 <a-checkbox
                     v-for="cat in visibleCats"
                     :key="cat.id"
+                    @change="(e) => toggleCategory(cat.id, e.target.checked)"
+                    :checked="selectedCats.includes(cat.id)"
                     class="ant-topalign mt-[40px]">
                   {{ cat.name }}
                 </a-checkbox>
@@ -42,10 +44,12 @@
               <div class="flex items-center gap-1">
                 <input placeholder="₫ TỪ"
                        @pressEnter="applyPrice"
+                       v-model="priceFromInput"
                        class="border border-gray-300 w-[45%] px-1 py-1 text-sm"/>
                 <span class="text-gray-400 text-sm">—</span>
                 <input placeholder="₫ ĐẾN"
                        @pressEnter="applyPrice"
+                       v-model="priceToInput"
                        class="border border-gray-300 w-[45%] px-1 py-1 text-sm"/>
               </div>
 
@@ -104,7 +108,7 @@
         <div class="bg-[#ededed] mb-3">
           <div class="flex flex-col md:flex-row md:items-center gap-3 px-3 py-3">
             <div class="shrink-0 font-medium text-sm text-gray-500">Sắp xếp theo</div>
-            <a-segmented v-model:value="sortKey" :options="['Liên Quan','Mới Nhất','Bán Chạy']"/>
+            <a-segmented @change="handleOrderProduct" v-model:value="sortKey" :options="['Liên Quan','Mới Nhất','Bán Chạy']"/>
             <a-dropdown>
               <a-button>
                 Giá
@@ -167,40 +171,43 @@
 import {computed, onMounted, ref, watch} from 'vue'
 import {message} from 'ant-design-vue'
 import ProductCard from "@/components/inventory/ProductCard.vue";
+import ProductCardSkeleton from "@/components/inventory/ProductCardSkeleton.vue";
 import {Category, categoryService} from "@/services/product/categoryService";
 import {FetchProductCondition, Product, productService} from "@/services/product/productService";
 import {useSearchStore} from '@/stores/searchStore'
-import {useRoute} from "vue-router";
-import ProductCardSkeleton from "@/components/inventory/ProductCardSkeleton.vue";
+import {useRoute, useRouter} from "vue-router"; // <<-- THÊM useRouter
 
 const products = ref<Product[]>([])
-const loading = ref(false)            // <<-- NEW
+const loading = ref(false)
 const categories = ref<Category[]>([])
-const priceFromInput = ref<string>('')   // text ở ô input
-const priceToInput = ref<string>('')   // text ở ô input
-const priceMin = ref<number | null>(null)  // giá trị đã apply
+const priceFromInput = ref<string>('')
+const priceToInput = ref<string>('')
+const priceMin = ref<number | null>(null)
 const priceMax = ref<number | null>(null)
+const selectedCats = ref<number[]>([]) // <<-- danh sách category chọn
 
 const sortKey = ref<'Liên Quan' | 'Mới Nhất' | 'Bán Chạy' | 'Giá'>('Liên Quan')
 const priceOrder = ref<'asc' | 'desc' | null>(null)
 let reqSeq = 0
 
-const filtered = computed(() => {
-  // chỗ này bạn cắm điều kiện filter thực sự (theo sidebar)
-  return products.value
-})
+const route = useRoute()
+const router = useRouter() // <<-- KHỞI TẠO
+const store = useSearchStore()
+
+const filtered = computed(() => products.value)
 
 const ordered = computed(() => {
-  let out = [...filtered.value]
+  const out = [...filtered.value]
   if (priceOrder.value) {
-    out.sort((a, b) => priceOrder.value === 'asc' ? a.price_info.current_price - b.price_info.current_price : b.price_info.current_price - a.price_info.current_price)
-    return out
+    out.sort((a, b) =>
+        priceOrder.value === 'asc'
+            ? a.price_info.current_price - b.price_info.current_price
+            : b.price_info.current_price - a.price_info.current_price
+    )
   }
   return out
 })
 
-const route = useRoute()
-const store = useSearchStore()
 const page = ref(1)
 const pageSize = 12
 const paged = computed(() => {
@@ -221,26 +228,21 @@ function goDetail(p: Product) {
 const loadCategories = async () => {
   try {
     categories.value = await categoryService.fetchAll()
-  } catch (err: any) {
+  } catch {
   }
 }
 
 const loadProducts = async (condition: FetchProductCondition = {}) => {
-  const seq = ++reqSeq                 // đánh dấu request hiện tại
+  const seq = ++reqSeq
   loading.value = true
+  products.value = [] // <<-- ẩn kết quả cũ để chỉ hiện skeleton
   try {
     const res = await productService.fetchByCondition(condition)
-    if (seq === reqSeq) {              // chỉ nhận kết quả mới nhất
-      products.value = res
-    }
-  } catch (err: any) {
-    if (seq === reqSeq) {
-      message.error('Không tải được danh sách sản phẩm')
-    }
+    if (seq === reqSeq) products.value = res
+  } catch {
+    if (seq === reqSeq) message.error('Không tải được danh sách sản phẩm')
   } finally {
-    if (seq === reqSeq) {
-      loading.value = false
-    }
+    if (seq === reqSeq) loading.value = false
   }
 }
 
@@ -252,7 +254,6 @@ const visibleCats = computed(() =>
 
 const ratingAtLeast = ref<number | null>(null)
 
-// Parse số từ chuỗi "₫", dấu chấm,… -> số nguyên VND
 function parseVnd(s: string): number | null {
   if (!s) return null
   const n = Number(s.replace(/\D/g, ''))
@@ -267,6 +268,7 @@ function fmt(n: number | null) {
 function applyPrice() {
   const min = parseVnd(priceFromInput.value)
   const max = parseVnd(priceToInput.value)
+  console.log(priceFromInput.value, priceToInput.value, min, max)
   if (min != null && max != null && min > max) {
     message.warning('Giá TỪ phải nhỏ hơn hoặc bằng ĐẾN')
     return
@@ -274,6 +276,14 @@ function applyPrice() {
   priceMin.value = min
   priceMax.value = max
   page.value = 1
+  router.replace({
+    path: '/product',
+    query: {
+      ...route.query,
+      price_from: min,
+      price_to: max,
+    },
+  })
 }
 
 function clearPrice() {
@@ -292,29 +302,72 @@ function clearRating() {
   page.value = 1
 }
 
+function handleOrderProduct(key: string) {
+  console.log(key)
+}
+
+// <<-- CẬP NHẬT URL khi tick/untick category
+function toggleCategory(catId: number, checked: boolean) {
+  if (checked) {
+    if (!selectedCats.value.includes(catId)) selectedCats.value.push(catId)
+  } else {
+    selectedCats.value = selectedCats.value.filter(id => id !== catId)
+  }
+  router.replace({
+    path: '/product',
+    query: {
+      ...route.query,
+      category_ids: selectedCats.value.length ? selectedCats.value.join(',') : undefined,
+    },
+  })
+}
+
+// <<-- WATCH 1: đọc category_ids từ URL để đồng bộ checkbox
 watch(
-    () => route.query.text,
-    (t) => {
-      const q = (t as string) || ''
-      loadProducts({text: q || undefined})
-      // đồng bộ về store nếu bạn muốn
-      if (q !== store.text) store.setText(q)
+    () => route.query,
+    (val) => {
+      const cats = route.query.category_ids;
+      if (typeof cats === 'string' && cats.length) {
+        selectedCats.value = cats.split(',').map(Number).filter(Boolean)
+      } else {
+        selectedCats.value = []
+      }
+      const priceFrom = route.query.price_from
+      const priceTo = route.query.price_to
+      if (priceFrom) priceFromInput.value = priceFrom.toString()
+      if (priceTo) priceToInput.value = priceTo.toString()
+    },
+    {immediate: true}
+)
+
+// <<-- WATCH 2: mỗi khi URL (text/category_ids/…) đổi thì gọi API
+watch(
+    () => route.query,
+    (q) => {
+      const text = (q.text as string) || ''
+      const cats = typeof q.category_ids === 'string'
+          ? q.category_ids.split(',').map(Number).filter(Boolean)
+          : []
+      const priceInputFrom = typeof q.price_from === 'string' ? Number(q.price_from) : null
+      const priceInputTo = typeof q.price_to === 'string' ? Number(q.price_to) : null
+      // đồng bộ về store nếu muốn dùng nơi khác
+      if (text !== store.text) store.setText(text)
+
+      // gọi API
+      loadProducts({
+        text: text || undefined,
+        category_ids: cats.length ? cats : undefined,
+        price_from: priceInputFrom,
+        price_to: priceInputTo
+      })
+
+      page.value = 1 // reset trang khi filter đổi
     },
     {immediate: true}
 )
 
 onMounted(async () => {
-  const qp = route.query.text
-  const fromUrl = Array.isArray(qp) ? qp[0] : (qp as string) || ''
-
-  if (fromUrl && fromUrl !== store.text) {
-    store.setText(fromUrl)
-  }
-
-  await Promise.all([
-    loadCategories(),
-    loadProducts({text: fromUrl || store.text || undefined}) // truyền STRING, không phải ref
-  ])
+  await loadCategories()
 })
 </script>
 
