@@ -391,4 +391,17 @@ onMounted(async () => {
   white-space: normal; /* cho phép xuống dòng */
   line-height: 1.25rem; /* khớp với .text-sm (leading-5) */
 }
+
+/*noinspection CssUnusedSymbol*/
+.ant-tag {
+  display: inline-flex; /* Thay đổi từ flex sang inline-flex để nó không chiếm diện tích thừa */
+  align-items: center;   /* Căn giữa nội dung theo chiều dọc */
+  padding-right: 10px;    /* Giảm khoảng cách giữa nội dung và icon */
+  padding-left: 10px;     /* Giảm khoảng cách bên trái nếu cần thiết */
+}
+
+/*noinspection CssUnusedSymbol*/
+.ant-tag .anticon-close {
+  margin-left: 5px;  /* Thêm một chút khoảng cách giữa nội dung và dấu X */
+}
 </style>

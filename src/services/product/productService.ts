@@ -32,10 +32,28 @@ export interface Product {
         currency: string
         current_price: number
     }
-    product_variants: any[]
-    tier_variants: any[]
+    product_variants: ProductVariant[]
+    tier_variants: TierVariant[]
 }
 
+export interface ProductVariant {
+    id: number
+    price_info: {
+        currency: string
+        current_price: number
+    }
+    status: string
+    stock_quantity: number
+    sku: string
+    sold: number
+    tier_index: number[]
+}
+
+export interface TierVariant {
+    name: string
+    options: string[],
+    images: string[],
+}
 
 export interface FetchProductCondition {
     category_ids?: number[];
