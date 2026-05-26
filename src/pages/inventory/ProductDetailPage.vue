@@ -1,31 +1,26 @@
 <template>
   <div class="overflow-x-auto w-full min-w-[800px] bg-background-page">
     <div class="fixed top-0 left-0 right-0 z-50 bg-white shadow">
-      <AuthHeader/>
+      <AuthHeader />
     </div>
     <div class="mx-auto py-6 max-w-7xl pt-[140px]">
-      <div class="pb-6">
-        <ProductDetail/>
-      </div>
+      <ProductDetail :product-id="productId" />
     </div>
-
-    <Footer/>
+    <Footer />
   </div>
 </template>
 
-
 <script setup lang="ts">
-import Footer from "@/components/Footer.vue";
-import {onMounted} from "vue";
-import AuthHeader from "@/components/AuthHeader.vue";
-import ProductDetail from "@/components/inventory/ProductDetail.vue";
-import {useRoute} from 'vue-router'
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import AuthHeader from '@/components/AuthHeader.vue'
+import Footer from '@/components/Footer.vue'
+import ProductDetail from '@/components/inventory/ProductDetail.vue'
+
+const route = useRoute()
+const productId = route.params.productName as string
 
 onMounted(() => {
-  document.title = "Tìm kiếm sản phẩm - Mua sắm online | GIADE"
+  document.title = 'Chi Tiết Sản Phẩm | GIADE'
 })
-const route = useRoute()
-const productName = route.params.productName as string
-
-console.log('Đang xem chi tiết:', productName)
 </script>

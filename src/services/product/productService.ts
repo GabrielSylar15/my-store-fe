@@ -51,12 +51,13 @@ export interface ProductVariant {
 
 export interface TierVariant {
     name: string
-    options: string[],
-    images: string[],
+    options: string[]
+    images: { url: string; image_ration: string | null }[] | null
 }
 
 export interface FetchProductCondition {
     category_ids?: number[];
+    product_ids?: number[];
     text?: string;
     order?: string;
     by?: string;
@@ -73,6 +74,11 @@ export interface FetchProductCondition {
 class ProductService {
     async fetchByCondition(condition: FetchProductCondition = {}): Promise<Product[]> {
         const res = await httpClient.post('/api/v1/products/get_by_condition', condition)
+        return res.data
+    }
+
+    async fetchById(id: number): Promise<Product> {
+        const res = await httpClient.get(`/api/v1/products/${id}`)
         return res.data
     }
 }

@@ -14,8 +14,7 @@
         <div class="flex items-center space-x-2 hover:cursor-pointer">
           <div class="relative">
             <span
-                class="absolute -top-1 -right-1 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-primary font-bold">3</span>
-            <i class="fas fa-bell text-xl"></i>
+                class="absolute -top-1 -right-1 bg-white text-xs rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center text-primary font-bold leading-none">3</span>
             <iconify-icon icon="line-md:bell-loop" width="24" height="24"></iconify-icon>
           </div>
           <span>Thông Báo</span>
@@ -27,7 +26,7 @@
         <div
             class="relative inline-block"
             @mouseenter="showDropdown = true"
-            @mouseleave="showDropdown = true"
+            @mouseleave="showDropdown = false"
         >
           <div class="flex items-center space-x-2 hover:underline px-1 py-1 cursor-pointer">
             <img src="https://i.pravatar.cc/32" alt="Avatar" class="w-6 h-6 rounded-full"/>
@@ -83,11 +82,97 @@
           </div>
         </div>
 
-        <div class="relative flex items-center">
+        <!-- ===== Cart icon with mini-cart dropdown ===== -->
+        <div
+            class="relative flex items-center cursor-pointer group"
+            title="Giỏ hàng"
+            @mouseenter="onCartEnter"
+            @mouseleave="onCartLeave"
+            @click="router.push('/cart')"
+        >
+          <!-- Badge -->
           <span
-              class="absolute -top-1 -right-2 bg-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-primary font-bold">300</span>
-          <iconify-icon icon="bx:cart" width="36" height="36" class="text-white"></iconify-icon>
+              class="absolute -top-1 -right-2 bg-white text-[10px] rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center text-primary font-bold leading-none transition-all"
+          >{{ cartStore.totalCount || 0 }}</span>
+          <!-- opacity hover applied ONLY to the icon, not the dropdown child -->
+          <iconify-icon icon="bx:cart" width="36" height="36" class="text-white group-hover:opacity-80 transition"></iconify-icon>
+
+          <!-- Mini-cart dropdown -->
+          <Transition name="cart-drop">
+            <div
+                v-if="showCartDropdown"
+                class="cart-dropdown absolute right-0 bg-white text-gray-800 shadow-2xl rounded z-[200]"
+                style="top: calc(100% + 10px); width: 360px;"
+                @click.stop
+                @mouseenter="onCartEnter"
+                @mouseleave="onCartLeave"
+            >
+              <!-- Caret arrow -->
+              <div class="absolute -top-2 right-4 w-0 h-0
+                          border-l-[8px] border-r-[8px] border-b-[8px]
+                          border-l-transparent border-r-transparent border-b-white
+                          drop-shadow-sm">
+              </div>
+
+              <!-- Loading state -->
+              <div v-if="cartStore.loading" class="flex justify-center items-center h-24">
+                <a-spin :spinning="true" />
+              </div>
+
+              <!-- Empty state -->
+              <div
+                  v-else-if="cartStore.recentItems.length === 0"
+                  class="flex flex-col items-center justify-center py-10 px-4 text-gray-400"
+              >
+                <iconify-icon icon="bx:cart" width="48" height="48" class="text-gray-200 mb-2"></iconify-icon>
+                <span class="text-sm">Chưa có sản phẩm trong giỏ hàng</span>
+              </div>
+
+              <!-- Items list -->
+              <template v-else>
+                <p class="px-4 pt-4 pb-2 text-xs text-gray-400 font-medium tracking-wide uppercase">
+                  Sản Phẩm Mới Thêm
+                </p>
+
+                <div class="max-h-[300px] overflow-y-auto">
+                  <div
+                      v-for="item in cartStore.recentItems"
+                      :key="`${item.product_id}-${item.product_variant_id}`"
+                      class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition"
+                      @click="router.push(`/product/${item.product_id}`)"
+                  >
+                    <img
+                        :src="getItemImage(item)"
+                        class="w-12 h-12 object-cover rounded border border-gray-100 flex-shrink-0 bg-gray-100"
+                        @error="onImgError"
+                        alt=""
+                    />
+                    <span class="flex-1 text-sm text-gray-700 line-clamp-2 leading-snug min-w-0">
+                      {{ item.product?.name || `Sản phẩm #${item.product_id}` }}
+                    </span>
+                    <span class="text-primary text-sm font-medium flex-shrink-0 ml-2">
+                      {{ currency(item.product?.price_info?.current_price ?? 0) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+                  <span class="text-sm text-gray-500">
+                    {{ cartStore.totalCount }} Thêm Hàng Vào Giỏ
+                  </span>
+                  <button
+                      class="px-4 py-2 bg-primary text-white text-sm rounded hover:bg-red-700 transition cursor-pointer"
+                      @click.stop="router.push('/cart')"
+                  >
+                    Xem Giỏ Hàng
+                  </button>
+                </div>
+              </template>
+            </div>
+          </Transition>
         </div>
+        <!-- ===== end cart ===== -->
 
       </div>
     </div>
@@ -98,19 +183,57 @@
 import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from 'vue-router'
 import {useSearchStore} from '@/stores/searchStore'
+import {useCartStore} from '@/stores/cartStore'
+import type {EnrichedCartItem} from '@/stores/cartStore'
 
 const showDropdown = ref(false)
 const router = useRouter()
 const route = useRoute()
 const searchStore = useSearchStore()
+const cartStore = useCartStore()
 
+// ─── Mini-cart hover logic ─────────────────────────────────────────────────────
+const showCartDropdown = ref(false)
+let hideTimer: ReturnType<typeof setTimeout> | null = null
+
+const onCartEnter = () => {
+  if (hideTimer) { clearTimeout(hideTimer); hideTimer = null }
+  showCartDropdown.value = true
+  // Lazy-load cart data on first hover
+  cartStore.loadCart()
+}
+
+const onCartLeave = () => {
+  hideTimer = setTimeout(() => {
+    showCartDropdown.value = false
+    hideTimer = null
+  }, 200) // small delay prevents flickering when moving to dropdown
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const getImageUrl = (id: string) => `https://drive.google.com/thumbnail?id=${id}`
+
+const getItemImage = (item: EnrichedCartItem) => {
+  const productImg = item.product?.images?.[0]?.url
+  if (productImg && !productImg.includes('-')) return getImageUrl(productImg)
+  if (item.image) return getImageUrl(item.image)
+  return 'https://placehold.co/48x48?text=?'
+}
+
+const onImgError = (e: Event) => {
+  (e.target as HTMLImageElement).src = 'https://placehold.co/48x48?text=?'
+}
+
+const currency = (n: number) =>
+    n.toLocaleString('vi-VN', {style: 'currency', currency: 'VND', maximumFractionDigits: 0})
+
+// ─── Search ───────────────────────────────────────────────────────────────────
 const q = computed({
   get: () => searchStore.text,
   set: (v: string) => searchStore.setText(v ?? '')
 })
 
 onMounted(() => {
-  // nếu vào /product?text=... -> đồng bộ vào store để input hiển thị
   const fromUrl = (route.query.text as string) || ''
   if (fromUrl && fromUrl !== searchStore.text) {
     searchStore.setText(fromUrl)
@@ -123,7 +246,7 @@ watch(
       const next = (t as string) ?? ''
       if (next !== searchStore.text) searchStore.setText(next)
     },
-    { immediate: true } // chạy ngay lần đầu để fill input khi load trang
+    {immediate: true}
 )
 
 const onSearch = () => {
@@ -133,8 +256,33 @@ const onSearch = () => {
   if (route.path !== '/product') {
     router.push({path: '/product', query: text ? {text} : {}})
   } else {
-    // đang ở /product thì cập nhật query để URL khớp (không reload)
     router.replace({path: '/product', query: text ? {text} : {}})
   }
 }
 </script>
+
+<style scoped>
+/* Dropdown slide-down transition */
+.cart-drop-enter-active,
+.cart-drop-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.cart-drop-enter-from,
+.cart-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* Scrollbar styling inside item list */
+.cart-dropdown ::-webkit-scrollbar {
+  width: 4px;
+}
+.cart-dropdown ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cart-dropdown ::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 2px;
+}
+</style>

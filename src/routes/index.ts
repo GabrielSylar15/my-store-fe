@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from '@/pages/HomePage.vue';
 import userRoutes from './user.routes.js';
 import productRoutes from "@/routes/product.routes";
+import orderRoutes from "@/routes/order.routes";
 
 const routes = [
     {
@@ -11,6 +12,7 @@ const routes = [
     },
     ...userRoutes,
     ...productRoutes,
+    ...orderRoutes,
 ];
 
 const router = createRouter({

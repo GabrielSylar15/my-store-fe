@@ -222,7 +222,7 @@ function onPriceSort(e: any) {
 }
 
 function goDetail(p: Product) {
-  message.info(`Xem chi tiết: ${p.name}`)
+  router.push({ name: 'ProductDetail', params: { productName: p.id } })
 }
 
 const loadCategories = async () => {
@@ -268,7 +268,6 @@ function fmt(n: number | null) {
 function applyPrice() {
   const min = parseVnd(priceFromInput.value)
   const max = parseVnd(priceToInput.value)
-  console.log(priceFromInput.value, priceToInput.value, min, max)
   if (min != null && max != null && min > max) {
     message.warning('Giá TỪ phải nhỏ hơn hoặc bằng ĐẾN')
     return
@@ -302,8 +301,8 @@ function clearRating() {
   page.value = 1
 }
 
-function handleOrderProduct(key: string) {
-  console.log(key)
+function handleOrderProduct(_key: string) {
+  // TODO: wire sort to API condition
 }
 
 // <<-- CẬP NHẬT URL khi tick/untick category
@@ -392,16 +391,15 @@ onMounted(async () => {
   line-height: 1.25rem; /* khớp với .text-sm (leading-5) */
 }
 
-/*noinspection CssUnusedSymbol*/
-.ant-tag {
-  display: inline-flex; /* Thay đổi từ flex sang inline-flex để nó không chiếm diện tích thừa */
-  align-items: center;   /* Căn giữa nội dung theo chiều dọc */
-  padding-right: 10px;    /* Giảm khoảng cách giữa nội dung và icon */
-  padding-left: 10px;     /* Giảm khoảng cách bên trái nếu cần thiết */
+/* Ant Design: fix tag alignment and close icon spacing */
+:deep(.ant-tag) {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
-/*noinspection CssUnusedSymbol*/
-.ant-tag .anticon-close {
-  margin-left: 5px;  /* Thêm một chút khoảng cách giữa nội dung và dấu X */
+:deep(.ant-tag .anticon-close) {
+  margin-left: 5px;
 }
 </style>

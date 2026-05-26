@@ -1,6 +1,6 @@
 import {createApp} from 'vue';
 import App from './App.vue';
-import router from './routes/index.js'; // 👈 dùng router tổng
+import router from './routes/index.ts'; // 👈 dùng router tổng
 import './assets/styles/tailwind.css';
 import Antd from 'ant-design-vue';
 import {createPinia} from 'pinia';

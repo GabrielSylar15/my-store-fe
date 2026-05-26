@@ -23,19 +23,12 @@
       <!-- Giá -->
       <div class="mt-2 flex items-baseline gap-2">
         <div class="text-red-600 font-semibold">{{ currency(product.price_info.current_price) }}</div>
-        <div
-            v-if="product.price_info.current_price"
-            class="text-gray-400 line-through text-xs"
-        >
-          {{ currency(product.price_info.current_price) }}
-        </div>
       </div>
 
-      <!-- Rating -->
-      <div class="mt-2 flex items-center gap-2 text-xs text-gray-500">
-        <span class="text-gray-600">{{ product.total_sold.toFixed(1) }}</span>
-        <span class="mx-1">|</span>
-        <span>dummy text</span>
+      <!-- Đã bán -->
+      <div class="mt-2 flex items-center gap-1 text-xs text-gray-500">
+        <span>{{ product.total_sold.toLocaleString('vi-VN') }}</span>
+        <span>đã bán</span>
       </div>
 
       <!-- Mall / Yêu thích + địa điểm -->
@@ -44,14 +37,13 @@
           <a-tag color="magenta" class="!m-0 !text-[10px]">Mall</a-tag>
           <a-tag color="red" class="!m-0 !text-[10px]">Yêu thích</a-tag>
         </div>
-        <div class="text-xs text-gray-500">dummy text</div>
+        <div class="text-xs text-gray-500">TP. Hồ Chí Minh</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {defineProps} from "vue";
 import {Product} from "@/services/product/productService";
 
 
@@ -68,10 +60,3 @@ const getImageUrl = (id: string) =>
     `https://drive.google.com/thumbnail?id=${id}`
 </script>
 
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
