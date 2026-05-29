@@ -31,6 +31,7 @@ export interface Product {
     price_info: {
         currency: string
         current_price: number
+        original_price?: number
     }
     product_variants: ProductVariant[]
     tier_variants: TierVariant[]
@@ -41,6 +42,7 @@ export interface ProductVariant {
     price_info: {
         currency: string
         current_price: number
+        original_price?: number
     }
     status: string
     stock_quantity: number
@@ -69,6 +71,7 @@ export interface FetchProductCondition {
         product_id?: number;
     },
     after?: string;
+    is_get_variant?: boolean;
 }
 
 class ProductService {

@@ -112,7 +112,7 @@
                   type="button"
                   class="px-3 py-1.5 border text-sm flex items-center gap-1.5 transition"
                   :class="selectedTiers[tierIdx] === optIdx
-                    ? 'border-primary text-primary bg-[#fff0f0]'
+                    ? 'border-primary text-primary bg-primary/10'
                     : isOptionAvailable(tierIdx, optIdx)
                       ? 'border-gray-200 text-gray-700 hover:border-primary hover:text-primary'
                       : 'border-gray-100 text-gray-300 cursor-not-allowed'"
@@ -152,14 +152,20 @@
                 <button
                   type="button"
                   class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40 text-lg leading-none"
-                  :disabled="qty >= currentStock"
-                  @click="qty = Math.min(currentStock, qty + 1)"
+                  :disabled="qty >= maxAddable"
+                  @click="qty = Math.min(maxAddable, qty + 1)"
                 >+</button>
               </div>
               <span class="text-sm text-gray-500">
                 Còn <b class="text-gray-700">{{ currentStock }}</b> sản phẩm
               </span>
             </div>
+          </div>
+          <!-- Max-qty warning -->
+          <div v-if="showMaxQtyWarning" class="grid grid-cols-12">
+            <span class="col-span-10 col-start-3 text-xs text-orange-500 mt-0.5">
+              Số lượng bạn chọn đã đạt mức tối đa của sản phẩm này
+            </span>
           </div>
 
           <!-- Action buttons -->
@@ -168,7 +174,7 @@
               type="button"
               :disabled="addingToCart"
               @click="addToCart"
-              class="flex items-center justify-center gap-2 px-6 h-12 border border-primary text-primary bg-[#fff0f0] hover:bg-[#ffe0e0] transition text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              class="flex items-center justify-center gap-2 px-6 h-12 border border-primary text-primary bg-primary/10 hover:bg-primary/20 transition text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <iconify-icon v-if="!addingToCart" icon="iconoir:add-to-cart" width="20" height="20"></iconify-icon>
               <a-spin v-else :spinning="true" size="small" />
@@ -178,7 +184,7 @@
               type="button"
               :disabled="addingToCart"
               @click="buyNow"
-              class="flex items-center justify-center px-8 h-12 bg-primary text-white hover:bg-red-700 transition text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              class="flex items-center justify-center px-8 h-12 bg-primary text-white hover:bg-primary-dark transition text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Mua Ngay
             </button>
@@ -259,7 +265,7 @@
                   type="button"
                   class="px-3 py-1 text-sm border transition"
                   :class="activeReviewFilter === f.key
-                    ? 'border-primary text-primary bg-[#fff0f0]'
+                    ? 'border-primary text-primary bg-primary/10'
                     : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'"
                   @click="activeReviewFilter = f.key"
                 >
@@ -472,7 +478,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { LeftCircleOutlined, RightCircleOutlined } from '@ant-design/icons-vue'
 import { Product, productService } from '@/services/product/productService'
 import { useCartStore } from '@/stores/cartStore'
@@ -715,6 +721,10 @@ watch(activeReviewFilter, () => { reviewPage.value = 1 })
 onMounted(async () => {
   if (!props.productId) return
 
+  // Ensure cart is loaded so cartQuantity is accurate from the start.
+  // loadCart() is idempotent — skipped if already fetched.
+  cartStore.loadCart()
+
   loading.value = true
   try {
     product.value = await productService.fetchById(Number(props.productId))
@@ -794,17 +804,42 @@ const displayPriceText = computed(() => {
   return `${currency(priceRange.value.min)} – ${currency(priceRange.value.max)}`
 })
 
-const currentStock = computed(() => {
-  if (matchedVariant.value) return matchedVariant.value.stock_quantity
-  return product.value?.stock_quantity ?? 0
+/** Units of the selected variant (or product) already in the cart. */
+const cartQuantity = computed(() => {
+  const p = product.value
+  if (!p) return 0
+  if (matchedVariant.value) {
+    const item = cartStore.rawItems.find(
+      i => i.product_id === p.id && i.product_variant_id === matchedVariant.value!.id
+    )
+    return item?.quantity ?? 0
+  }
+  return cartStore.rawItems
+    .filter(i => i.product_id === p.id)
+    .reduce((sum, i) => sum + i.quantity, 0)
 })
+
+/** Raw stock — always shown as-is in "Còn X sản phẩm". */
+const currentStock = computed(() =>
+  matchedVariant.value
+    ? matchedVariant.value.stock_quantity
+    : (product.value?.stock_quantity ?? 0)
+)
+
+/** Maximum units the buyer can still add without exceeding stock. */
+const maxAddable = computed(() => Math.max(0, currentStock.value - cartQuantity.value))
+
+/** True when the qty selector has reached the addable ceiling. */
+const showMaxQtyWarning = computed(() =>
+  cartQuantity.value > 0 && qty.value + cartQuantity.value >= currentStock.value
+)
 
 const canPurchase = computed(() => {
   const hasTiers = (product.value?.tier_variants?.length ?? 0) > 0
   if (hasTiers) {
-    return !!matchedVariant.value && matchedVariant.value.stock_quantity > 0 && qty.value >= 1
+    return !!matchedVariant.value && currentStock.value > 0 && qty.value >= 1
   }
-  return (product.value?.stock_quantity ?? 0) > 0 && qty.value >= 1
+  return currentStock.value > 0 && qty.value >= 1
 })
 
 function isOptionAvailable(tierPos: number, optIdx: number): boolean {
@@ -837,18 +872,35 @@ function currency(n: number) {
 
 const addingToCart = ref(false)
 
+function checkTierSelection(): boolean {
+  const unselected = product.value?.tier_variants?.find((_, i) => selectedTiers.value[i] === null)
+  if (unselected) {
+    message.warning(`Vui lòng chọn ${unselected.name.toLowerCase()}`)
+    return false
+  }
+  return true
+}
+
+function checkCartOverflow(): boolean {
+  if (qty.value + cartQuantity.value > currentStock.value) {
+    Modal.warning({
+      title: 'Đã đạt giới hạn mua hàng',
+      content: `Bạn đã có ${cartQuantity.value} sản phẩm trong giỏ hàng. Không thể thêm số lượng đã chọn vào giỏ hàng vì sẽ vượt quá giới hạn tồn kho.`,
+      okText: 'Đã hiểu',
+      centered: true,
+    })
+    return false
+  }
+  return true
+}
+
 async function addToCart() {
   showTierError.value = true
   if (!canPurchase.value) {
-    const unselected = product.value?.tier_variants?.find((_, i) => selectedTiers.value[i] === null)
-    if (unselected) {
-      message.warning(`Vui lòng chọn ${unselected.name.toLowerCase()}`)
-    } else {
-      message.warning('Sản phẩm hiện đã hết hàng')
-    }
+    checkTierSelection() || message.warning('Sản phẩm hiện đã hết hàng')
     return
   }
-  if (!product.value) return
+  if (!checkCartOverflow() || !product.value) return
   addingToCart.value = true
   try {
     const variantId = matchedVariant.value?.id ?? 0
@@ -864,15 +916,10 @@ async function addToCart() {
 async function buyNow() {
   showTierError.value = true
   if (!canPurchase.value) {
-    const unselected = product.value?.tier_variants?.find((_, i) => selectedTiers.value[i] === null)
-    if (unselected) {
-      message.warning(`Vui lòng chọn ${unselected.name.toLowerCase()}`)
-    } else {
-      message.warning('Sản phẩm hiện đã hết hàng')
-    }
+    checkTierSelection() || message.warning('Sản phẩm hiện đã hết hàng')
     return
   }
-  if (!product.value) return
+  if (!checkCartOverflow() || !product.value) return
   addingToCart.value = true
   try {
     const variantId = matchedVariant.value?.id ?? 0

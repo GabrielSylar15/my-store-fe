@@ -3,15 +3,15 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
       <aside class="lg:col-span-2 hidden lg:block">
-        <div class="">
-          <div class="px-1 py-3 font-semibold">
-            <iconify-icon icon="charm:filter" width="12" height="12"></iconify-icon>
+        <div class="bg-white rounded border border-border-base">
+          <div class="px-3 py-3 font-semibold text-sm flex items-center gap-1.5 border-b border-border-base">
+            <iconify-icon icon="charm:filter" width="13" height="13"></iconify-icon>
             BỘ LỌC TÌM KIẾM
           </div>
 
-          <div class="px-1 py-3 space-y-3">
+          <div class="px-3 py-3 space-y-3">
             <div class="pt-1">
-              <div class="mb-2 text-sm">Theo danh mục</div>
+              <div class="mb-2 text-sm font-medium text-gray-700">Theo danh mục</div>
 
               <div class="space-y-2">
                 <a-checkbox
@@ -38,30 +38,30 @@
               </button>
             </div>
 
-            <div class="pt-3 border-t border-gray-200 ">
-              <div class="mb-2 text-sm">Khoảng giá</div>
+            <div class="pt-3 border-t border-gray-200">
+              <div class="mb-2 text-sm font-medium text-gray-700">Khoảng giá</div>
 
               <div class="flex items-center gap-1">
                 <input placeholder="₫ TỪ"
-                       @pressEnter="applyPrice"
+                       @keyup.enter="applyPrice"
                        v-model="priceFromInput"
-                       class="border border-gray-300 w-[45%] px-1 py-1 text-sm"/>
+                       class="border border-gray-300 rounded w-[45%] px-2 py-1.5 text-sm focus:outline-none focus:border-primary"/>
                 <span class="text-gray-400 text-sm">—</span>
                 <input placeholder="₫ ĐẾN"
-                       @pressEnter="applyPrice"
+                       @keyup.enter="applyPrice"
                        v-model="priceToInput"
-                       class="border border-gray-300 w-[45%] px-1 py-1 text-sm"/>
+                       class="border border-gray-300 rounded w-[45%] px-2 py-1.5 text-sm focus:outline-none focus:border-primary"/>
               </div>
 
-              <button @click="applyPrice" class="mt-3 bg-primary w-full py-1 text-white cursor-pointer">ÁP DỤNG</button>
+              <button @click="applyPrice" class="mt-3 bg-primary w-full py-1.5 text-sm text-white rounded cursor-pointer hover:bg-primary-dark transition">ÁP DỤNG</button>
 
               <div v-if="priceMin!==null || priceMax!==null" class="mt-2">
                 <a-tag closable @close="clearPrice">₫{{ fmt(priceMin) }} - ₫{{ fmt(priceMax) }}</a-tag>
               </div>
             </div>
 
-            <div class="pt-3 border-t border-gray-200 ">
-              <div class="mb-2 text-sm">Đánh giá</div>
+            <div class="pt-3 border-t border-gray-200">
+              <div class="mb-2 text-sm font-medium text-gray-700">Đánh giá</div>
               <div class="space-y-2">
                 <ul class="space-y-2">
                   <li
@@ -105,7 +105,7 @@
       <!-- MAIN -->
       <section class="lg:col-span-10">
         <!-- SORT BAR -->
-        <div class="bg-[#ededed] mb-3">
+        <div class="bg-background-page rounded mb-3 border border-border-base">
           <div class="flex flex-col md:flex-row md:items-center gap-3 px-3 py-3">
             <div class="shrink-0 font-medium text-sm text-gray-500">Sắp xếp theo</div>
             <a-segmented @change="handleOrderProduct" v-model:value="sortKey" :options="['Liên Quan','Mới Nhất','Bán Chạy']"/>

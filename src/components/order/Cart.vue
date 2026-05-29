@@ -9,8 +9,8 @@
       <p class="text-gray-400 mt-4 text-lg">Giỏ hàng của bạn còn trống</p>
       <a-button
           type="primary"
-          class="mt-6 !bg-primary !border-primary"
           size="large"
+          class="mt-6"
           @click="router.push('/product')"
       >
         Mua Ngay
@@ -36,11 +36,14 @@
       <div class="bg-white rounded shadow mb-3">
         <div
             v-for="item in enrichedItems"
-            :key="item.product_id"
+            :key="itemKey(item)"
             class="cart-item-row items-center gap-4 px-6 py-5 border-b border-gray-100 last:border-0"
         >
           <!-- Checkbox -->
-          <a-checkbox v-model:checked="item.checked"/>
+          <a-checkbox
+              :checked="checkedSet.has(itemKey(item))"
+              @change="(e) => toggleItem(item, e)"
+          />
 
           <!-- Product info -->
           <div class="flex items-start gap-3 ml-4 min-w-0">
@@ -60,11 +63,11 @@
               </p>
               <div v-if="item.product?.tier_variants?.length" class="mt-2 flex flex-wrap gap-1">
                 <span
-                    v-for="tv in item.product.tier_variants"
-                    :key="tv.name"
+                    v-for="(label, i) in getVariantLabels(item)"
+                    :key="i"
                     class="text-xs text-gray-500 border border-gray-300 rounded px-2 py-0.5 inline-block"
                 >
-                  {{ tv.name }}: {{ tv.options[0] }}
+                  {{ label }}
                 </span>
               </div>
             </div>
@@ -81,8 +84,7 @@
           <div class="flex items-center justify-center">
             <div class="flex items-center border border-gray-300 rounded overflow-hidden">
               <button
-                  class="w-8 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-lg leading-none"
-                  :disabled="item.quantity <= 1"
+                  class="w-8 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition cursor-pointer text-lg leading-none"
                   @click="decreaseQty(item)"
               >−
               </button>
@@ -97,7 +99,7 @@
               />
               <button
                   class="w-8 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-lg leading-none"
-                  :disabled="item.quantity >= (item.product?.stock_quantity ?? 99)"
+                  :disabled="item.quantity >= getVariantStock(item)"
                   @click="increaseQty(item)"
               >+
               </button>
@@ -192,7 +194,7 @@
           <a-button
               type="primary"
               size="large"
-              class="!bg-primary !border-primary !h-12 !px-10 !text-base !font-medium !rounded"
+              class="!h-12 !px-10 !text-base !font-medium"
               :disabled="selectedCount === 0"
               @click="checkout"
           >
@@ -205,205 +207,235 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, onUnmounted} from 'vue'
-import {message} from 'ant-design-vue'
-import {useRouter} from 'vue-router'
-import {cartService, type CartItem} from '@/services/cart/cartService'
-import {productService, type Product} from '@/services/product/productService'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { message, Modal } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
+import { useCartStore } from '@/stores/cartStore'
+import type { EnrichedCartItem } from '@/stores/cartStore'
+import { useCheckoutStore } from '@/stores/checkoutStore'
+import { cartService } from '@/services/cart/cartService'
 
 const router = useRouter()
+const cartStore = useCartStore()
+const checkoutStore = useCheckoutStore()
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface EnrichedCartItem extends CartItem {
-  product?: Product
-  checked: boolean
-}
+// ─── Selection state (UI-only, not part of cart data) ─────────────────────────
+const checkedSet = ref(new Set<string>())
 
-// ─── State ────────────────────────────────────────────────────────────────────
-const loading = ref(false)
-const enrichedItems = ref<EnrichedCartItem[]>([])
-const inactiveItems = ref<CartItem[]>([])
+const itemKey = (i: { product_id: number; product_variant_id: number }) =>
+  `${i.product_id}-${i.product_variant_id}`
 
-// Debounce timers keyed by product_id
-const debounceTimers = new Map<number, ReturnType<typeof setTimeout>>()
-onUnmounted(() => debounceTimers.forEach(t => clearTimeout(t)))
+const enrichedItems = computed(() => cartStore.enrichedItems)
+const inactiveItems = computed(() => cartStore.inactiveItems)
+const loading       = computed(() => cartStore.loading)
 
-// ─── Computed ─────────────────────────────────────────────────────────────────
+// ─── Computed selection ────────────────────────────────────────────────────────
 const allSelected = computed(
-    () => enrichedItems.value.length > 0 && enrichedItems.value.every(i => i.checked)
+  () => enrichedItems.value.length > 0 && enrichedItems.value.every(i => checkedSet.value.has(itemKey(i)))
 )
 const someSelected = computed(
-    () => enrichedItems.value.some(i => i.checked) && !allSelected.value
+  () => enrichedItems.value.some(i => checkedSet.value.has(itemKey(i))) && !allSelected.value
 )
 const selectedCount = computed(
-    () => enrichedItems.value.filter(i => i.checked).length
+  () => enrichedItems.value.filter(i => checkedSet.value.has(itemKey(i))).length
 )
 const selectedTotal = computed(() =>
-    enrichedItems.value
-        .filter(i => i.checked)
-        .reduce((sum, i) => sum + (i.product?.price_info?.current_price ?? 0) * i.quantity, 0)
+  enrichedItems.value
+    .filter(i => checkedSet.value.has(itemKey(i)))
+    .reduce((sum, i) => sum + (i.product?.price_info?.current_price ?? 0) * i.quantity, 0)
 )
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getImageUrl = (id: string) => `https://drive.google.com/thumbnail?id=${id}`
 
+/** Returns "TierName: OptionValue" labels for the specific variant selected in this cart item. */
+const getVariantLabels = (item: EnrichedCartItem): string[] => {
+  const product = item.product
+  if (!product?.tier_variants?.length) return []
+  const variant = product.product_variants?.find(v => v.id === item.product_variant_id)
+  if (!variant?.tier_index?.length) return product.tier_variants.map(tv => `${tv.name}: ${tv.options[0]}`)
+  return variant.tier_index.map((optIdx, tierIdx) => {
+    const tier = product.tier_variants[tierIdx]
+    return tier ? `${tier.name}: ${tier.options[optIdx - 1] ?? ''}` : ''
+  }).filter(Boolean)
+}
+
 const currency = (n: number) =>
-    n.toLocaleString('vi-VN', {style: 'currency', currency: 'VND', maximumFractionDigits: 0})
+  n.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })
 
 const onImgError = (e: Event) => {
-  const img = e.target as HTMLImageElement
-  img.src = 'https://placehold.co/80x80?text=No+Image'
+  ;(e.target as HTMLImageElement).src = 'https://placehold.co/80x80?text=No+Image'
+}
+
+/** Variant stock takes priority over product-level stock. */
+const getVariantStock = (item: EnrichedCartItem): number => {
+  const variant = item.product?.product_variants?.find(v => v.id === item.product_variant_id)
+  return variant?.stock_quantity ?? item.product?.stock_quantity ?? 99
 }
 
 const clampQty = (item: EnrichedCartItem, val: number): number => {
-  const max = item.product?.stock_quantity ?? 99
+  const max = getVariantStock(item)
   return Math.max(1, Math.min(max, isNaN(val) ? 1 : val))
 }
 
-// ─── API sync ─────────────────────────────────────────────────────────────────
-const syncCartItem = async (item: EnrichedCartItem, quantity: number) => {
-  try {
-    await cartService.updateCart([{
-      product_id: item.product_id,
-      product_variant_id: item.product_variant_id,
-      quantity,
-    }])
-  } catch {
-    message.error('Cập nhật giỏ hàng thất bại')
+// ─── Debounced API sync (keyed by product_id + variant_id) ────────────────────
+// Local store quantity is updated immediately; the API call is debounced for UX.
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
+onUnmounted(() => debounceTimers.forEach(t => clearTimeout(t)))
+
+const cancelTimer = (key: string) => {
+  if (debounceTimers.has(key)) {
+    clearTimeout(debounceTimers.get(key)!)
+    debounceTimers.delete(key)
   }
 }
 
-/** Schedule a debounced API sync (500 ms) — resets timer on each call */
-const scheduleSync = (item: EnrichedCartItem) => {
-  if (debounceTimers.has(item.product_id)) {
-    clearTimeout(debounceTimers.get(item.product_id)!)
-  }
-  debounceTimers.set(
-      item.product_id,
-      setTimeout(() => {
-        syncCartItem(item, item.quantity)
-        debounceTimers.delete(item.product_id)
-      }, 500)
+const scheduleSync = (productId: number, variantId: number, qty: number) => {
+  const key = `${productId}-${variantId}`
+  cancelTimer(key)
+  debounceTimers.set(key, setTimeout(async () => {
+    debounceTimers.delete(key)
+    try {
+      // Call API directly — local state is already updated optimistically by the caller.
+      // Using setQuantity here would double-apply the local mutation.
+      await cartService.updateCart([{ product_id: productId, product_variant_id: variantId, quantity: qty }])
+    } catch {
+      message.error('Cập nhật giỏ hàng thất bại')
+    }
+  }, 500))
+}
+
+const flushSync = (productId: number, variantId: number, qty: number) => {
+  cancelTimer(`${productId}-${variantId}`)
+  cartService.updateCart([{ product_id: productId, product_variant_id: variantId, quantity: qty }]).catch(() =>
+    message.error('Cập nhật giỏ hàng thất bại')
   )
 }
 
-/** Flush any pending debounce for an item immediately */
-const flushSync = (item: EnrichedCartItem) => {
-  if (debounceTimers.has(item.product_id)) {
-    clearTimeout(debounceTimers.get(item.product_id)!)
-    debounceTimers.delete(item.product_id)
-  }
-  syncCartItem(item, item.quantity)
-}
-
-// ─── Actions ──────────────────────────────────────────────────────────────────
-const toggleAll = (e: any) => {
-  const checked = e.target.checked
-  enrichedItems.value.forEach(i => (i.checked = checked))
-}
-
+// ─── Quantity actions ─────────────────────────────────────────────────────────
 const increaseQty = (item: EnrichedCartItem) => {
   const next = clampQty(item, item.quantity + 1)
-  if (next !== item.quantity) {
-    item.quantity = next
-    scheduleSync(item)
-  }
+  if (next === item.quantity) return
+  // optimistic local update so the UI is instant
+  const raw = cartStore.rawItems.find(
+    i => i.product_id === item.product_id && i.product_variant_id === item.product_variant_id
+  )
+  if (raw) raw.quantity = next
+  scheduleSync(item.product_id, item.product_variant_id, next)
 }
 
 const decreaseQty = (item: EnrichedCartItem) => {
-  const next = clampQty(item, item.quantity - 1)
-  if (next !== item.quantity) {
-    item.quantity = next
-    scheduleSync(item)
+  if (item.quantity === 1) {
+    // Decreasing below 1 means removal — ask the user first
+    const name = item.product?.name ?? 'sản phẩm này'
+    const label = name.length > 60 ? name.slice(0, 57) + '…' : name
+    Modal.confirm({
+      title: 'Xóa sản phẩm khỏi giỏ hàng?',
+      content: `"${label}" sẽ bị xóa khỏi giỏ hàng của bạn.`,
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Giữ lại',
+      centered: true,
+      onOk: () => removeItem(item),
+    })
+    return
   }
+  const next = Math.max(1, item.quantity - 1)
+  const raw = cartStore.rawItems.find(
+    i => i.product_id === item.product_id && i.product_variant_id === item.product_variant_id
+  )
+  if (raw) raw.quantity = next
+  scheduleSync(item.product_id, item.product_variant_id, next)
 }
 
-/** Called on every keystroke inside the qty input */
 const onQtyInput = (item: EnrichedCartItem, e: Event) => {
   const input = e.target as HTMLInputElement
   const raw = parseInt(input.value, 10)
-  if (!isNaN(raw)) {
-    const clamped = clampQty(item, raw)
-    item.quantity = clamped
-    if (clamped !== raw) input.value = String(clamped)
-    scheduleSync(item)
-  }
+  if (isNaN(raw)) return
+  const clamped = clampQty(item, raw)
+  const storeItem = cartStore.rawItems.find(
+    i => i.product_id === item.product_id && i.product_variant_id === item.product_variant_id
+  )
+  if (storeItem) storeItem.quantity = clamped
+  if (clamped !== raw) input.value = String(clamped)
+  scheduleSync(item.product_id, item.product_variant_id, clamped)
 }
 
-/** On blur: correct empty/out-of-range values and flush immediately */
 const onQtyBlur = (item: EnrichedCartItem, e: Event) => {
   const input = e.target as HTMLInputElement
-  const raw = parseInt(input.value, 10)
-  const clamped = clampQty(item, raw)
-  item.quantity = clamped
+  const clamped = clampQty(item, parseInt(input.value, 10))
+  const storeItem = cartStore.rawItems.find(
+    i => i.product_id === item.product_id && i.product_variant_id === item.product_variant_id
+  )
+  if (storeItem) storeItem.quantity = clamped
   input.value = String(clamped)
-  flushSync(item)
+  flushSync(item.product_id, item.product_variant_id, clamped)
 }
 
-const removeItem = async (item: EnrichedCartItem) => {
-  // cancel any pending debounce before removing
-  if (debounceTimers.has(item.product_id)) {
-    clearTimeout(debounceTimers.get(item.product_id)!)
-    debounceTimers.delete(item.product_id)
+// ─── Selection actions ────────────────────────────────────────────────────────
+const toggleAll = (e: any) => {
+  if (e.target.checked) {
+    checkedSet.value = new Set(enrichedItems.value.map(itemKey))
+  } else {
+    checkedSet.value = new Set()
   }
-  enrichedItems.value = enrichedItems.value.filter(i => i.product_id !== item.product_id)
-  message.success('Đã xóa sản phẩm khỏi giỏ hàng')
-  await syncCartItem(item, 0) // quantity = 0 signals removal
+}
+
+const toggleItem = (item: EnrichedCartItem, e: any) => {
+  const k = itemKey(item)
+  const next = new Set(checkedSet.value)
+  if (e.target.checked) next.add(k)
+  else next.delete(k)
+  checkedSet.value = next
+}
+
+// ─── Remove actions ───────────────────────────────────────────────────────────
+const removeItem = async (item: EnrichedCartItem) => {
+  cancelTimer(itemKey(item))
+  checkedSet.value.delete(itemKey(item))
+  try {
+    await cartStore.removeItems([{
+      product_id: item.product_id,
+      product_variant_id: item.product_variant_id,
+      quantity: 0,
+    }])
+    message.success('Đã xóa sản phẩm khỏi giỏ hàng')
+  } catch {
+    message.error('Xóa sản phẩm thất bại')
+  }
 }
 
 const removeSelected = async () => {
-  const toRemove = enrichedItems.value.filter(i => i.checked)
+  const toRemove = enrichedItems.value.filter(i => checkedSet.value.has(itemKey(i)))
   if (toRemove.length === 0) {
     message.warning('Vui lòng chọn sản phẩm cần xóa')
     return
   }
-  toRemove.forEach(item => {
-    if (debounceTimers.has(item.product_id)) {
-      clearTimeout(debounceTimers.get(item.product_id)!)
-      debounceTimers.delete(item.product_id)
-    }
-  })
-  enrichedItems.value = enrichedItems.value.filter(i => !i.checked)
-  message.success(`Đã xóa ${toRemove.length} sản phẩm khỏi giỏ hàng`)
+  toRemove.forEach(i => cancelTimer(itemKey(i)))
+  const next = new Set(checkedSet.value)
+  toRemove.forEach(i => next.delete(itemKey(i)))
+  checkedSet.value = next
   try {
-    await cartService.updateCart(
-        toRemove.map(i => ({product_id: i.product_id, product_variant_id: i.product_variant_id, quantity: 0}))
+    await cartStore.removeItems(
+      toRemove.map(i => ({ product_id: i.product_id, product_variant_id: i.product_variant_id, quantity: 0 }))
     )
+    message.success(`Đã xóa ${toRemove.length} sản phẩm khỏi giỏ hàng`)
   } catch {
-    message.error('Cập nhật giỏ hàng thất bại')
+    message.error('Xóa sản phẩm thất bại')
   }
 }
 
 const checkout = () => {
   if (selectedCount.value === 0) return
+  const selected = enrichedItems.value.filter(i => checkedSet.value.has(itemKey(i)))
+  checkoutStore.setSelectedItems(selected)
   router.push('/checkout')
 }
 
 // ─── Data loading ─────────────────────────────────────────────────────────────
-onMounted(async () => {
-  loading.value = true
-  try {
-    const cart = await cartService.getCart()
-    inactiveItems.value = cart.inactive_items ?? []
-
-    if (!cart.active_items?.length) return
-
-    const productIds = [...new Set(cart.active_items.map(i => i.product_id))]
-    const products = await productService.fetchByCondition({product_ids: productIds})
-
-    const productMap = new Map<number, Product>()
-    products.forEach(p => productMap.set(p.id, p))
-
-    enrichedItems.value = cart.active_items.map(item => ({
-      ...item,
-      product: productMap.get(item.product_id),
-      checked: false,
-    }))
-  } catch {
-    message.error('Không tải được giỏ hàng. Vui lòng thử lại.')
-  } finally {
-    loading.value = false
-  }
+onMounted(() => {
+  // Force a fresh load so Cart page always reflects the latest server state
+  cartStore.loadCart(true)
 })
 </script>
 

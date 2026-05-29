@@ -1,56 +1,17 @@
-<!--<script setup>-->
-<!--import HelloWorld from './components/HelloWorld.vue'-->
-<!--import TheWelcome from './components/TheWelcome.vue'-->
-<!--</script>-->
-
-<!--<template>-->
-<!--  <header>-->
-<!--    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />-->
-
-<!--    <div class="wrapper">-->
-<!--      <HelloWorld msg="You did it!" />-->
-<!--    </div>-->
-<!--  </header>-->
-
-<!--  <main>-->
-<!--    <TheWelcome />-->
-<!--  </main>-->
-<!--</template>-->
-
-<!--<style scoped>-->
-<!--header {-->
-<!--  line-height: 1.5;-->
-<!--}-->
-
-<!--.logo {-->
-<!--  display: block;-->
-<!--  margin: 0 auto 2rem;-->
-<!--}-->
-
-<!--@media (min-width: 1024px) {-->
-<!--  header {-->
-<!--    display: flex;-->
-<!--    place-items: center;-->
-<!--    padding-right: calc(var(&#45;&#45;section-gap) / 2);-->
-<!--  }-->
-
-<!--  .logo {-->
-<!--    margin: 0 2rem 0 0;-->
-<!--  }-->
-
-<!--  header .wrapper {-->
-<!--    display: flex;-->
-<!--    place-items: flex-start;-->
-<!--    flex-wrap: wrap;-->
-<!--  }-->
-<!--}-->
-<!--</style>-->
 <template>
-  <router-view />
+  <a-config-provider
+    :theme="{
+      token: {
+        colorPrimary: '#ee4d2d',
+        colorLink: '#ee4d2d',
+        borderRadius: 4,
+        fontFamily: '\'Be Vietnam Pro\', ui-sans-serif, system-ui, sans-serif',
+      },
+    }"
+  >
+    <router-view />
+  </a-config-provider>
 </template>
 
 <script setup>
 </script>
-
-<style>
-</style>

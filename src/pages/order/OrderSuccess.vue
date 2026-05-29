@@ -4,7 +4,7 @@
       <AuthHeader />
     </div>
     <div class="mx-auto py-6 max-w-7xl pt-[140px]">
-      <CheckOutComponent />
+      <OrderSuccessComponent />
     </div>
     <Footer />
   </div>
@@ -14,9 +14,7 @@
 import { onMounted } from 'vue'
 import AuthHeader from '@/components/AuthHeader.vue'
 import Footer from '@/components/Footer.vue'
-import CheckOutComponent from '@/components/order/CheckOut.vue'
+import OrderSuccessComponent from '@/components/order/OrderSuccess.vue'
 
-onMounted(() => {
-  document.title = 'Thanh Toán | GIADE'
-})
+onMounted(() => { document.title = 'Đặt Hàng Thành Công | GIADE' })
 </script>

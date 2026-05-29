@@ -7,7 +7,7 @@
       <div class="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-5">
         <UserSidebar />
         <div class="min-w-0">
-          <BuyerProfile />
+          <OrderList />
         </div>
       </div>
     </div>
@@ -19,8 +19,8 @@
 import { onMounted } from 'vue'
 import AuthHeader from '@/components/AuthHeader.vue'
 import Footer from '@/components/Footer.vue'
+import OrderList from '@/components/order/OrderList.vue'
 import UserSidebar from '@/components/users/UserSidebar.vue'
-import BuyerProfile from '@/components/users/BuyerProfile.vue'
 
-onMounted(() => { document.title = 'Hồ Sơ Của Tôi | GIADE' })
+onMounted(() => { document.title = 'Đơn Mua | GIADE' })
 </script>

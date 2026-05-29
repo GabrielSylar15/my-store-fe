@@ -1,6 +1,6 @@
 import BuyerLoginPage from '../pages/user/BuyerLoginPage.vue'
 import OAuthCallbackPage from "@/pages/user/OAuthCallbackPage.vue";
-import BuyerProfile from "@/components/users/BuyerProfile.vue";
+import UserProfile from "@/pages/user/UserProfile.vue";
 
 const userRoutes = [
     {
@@ -16,7 +16,7 @@ const userRoutes = [
     {
         path: '/user/account/profile',
         name: "AccountProfilePage",
-        component: BuyerProfile
+        component: UserProfile
     }
 ];
 

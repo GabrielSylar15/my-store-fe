@@ -42,9 +42,9 @@
                 class="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white"></div>
 
             <div class="bg-white text-black rounded-md shadow-lg">
-              <a href="#" class="block px-4 py-2 hover:bg-gray-100 rounded-md">Tài Khoản Của Tôi</a>
-              <a href="#" class="block px-4 py-2 hover:bg-gray-100 rounded-md">Đơn Mua</a>
-              <a href="#" class="block px-4 py-2 hover:bg-gray-100 rounded-md">Đăng Xuất</a>
+              <a class="block px-4 py-2 hover:bg-gray-100 rounded-md cursor-pointer" @click="router.push('/user/account/profile')">Tài Khoản Của Tôi</a>
+              <a class="block px-4 py-2 hover:bg-gray-100 rounded-md cursor-pointer" @click="router.push('/user/orders')">Đơn Mua</a>
+              <a class="block px-4 py-2 hover:bg-gray-100 rounded-md cursor-pointer">Đăng Xuất</a>
             </div>
           </div>
         </div>
@@ -162,7 +162,7 @@
                     {{ cartStore.totalCount }} Thêm Hàng Vào Giỏ
                   </span>
                   <button
-                      class="px-4 py-2 bg-primary text-white text-sm rounded hover:bg-red-700 transition cursor-pointer"
+                      class="px-4 py-2 bg-primary text-white text-sm rounded hover:bg-primary-dark transition cursor-pointer"
                       @click.stop="router.push('/cart')"
                   >
                     Xem Giỏ Hàng

@@ -398,6 +398,37 @@ Then read the file: `Read /tmp/screenshot.png`
 - `Runtime.evaluate` may timeout during the first navigate (Chrome fires events before the response is received); this is harmless — the token/navigate still executes.
 - Pages that require auth show "Unauthorized request" toast if the token is missing or expired. Get a fresh token via: `curl -s http://localhost:8080/api/v1/users/auth/login -d '{"email":"...","password":"..."}'` or reuse one from the browser's DevTools → Application → Local Storage → `app_access_token`.
 
+## Backend API Conventions
+
+### ProductVariant `tier_index` is 1-based
+
+`tier_index` values start at **1**, not 0. Subtract 1 before indexing into `options`:
+
+```ts
+variant.tier_index.map((optIdx, tierIdx) => {
+  const tier = product.tier_variants[tierIdx]
+  return tier.options[optIdx - 1]  // optIdx is 1-based!
+})
+```
+
+Example: `tier_index: [1, 3]` with Size options `["S", "M", "L"]` → `options[2]` = "L".
+
+### Fetching product variants requires `is_get_variant: true`
+
+`product_variants` is omitted from the response unless the request body includes `"is_get_variant": true`. Always pass this flag when variant data is needed (cart, product detail, etc.).
+
+### Use variant-level `stock_quantity`, not product-level
+
+`Product.stock_quantity` is a product-level aggregate and may be lower than individual variant stock. Always prefer variant stock for quantity caps:
+
+```ts
+const stock = product.product_variants?.find(v => v.id === variantId)?.stock_quantity
+  ?? product.stock_quantity
+  ?? 99
+```
+
+Using product-level stock as a clamp max caused the cart "−" button to jump from qty=5 to qty=2 in one click (`Math.min(2, 4) = 2`).
+
 ## Known Gotchas
 
 - **`htttpClientFactory.ts`** has a triple-t typo in the filename. Do **not** rename — all existing imports depend on this exact name.
