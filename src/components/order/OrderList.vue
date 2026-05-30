@@ -256,8 +256,8 @@ load()
 }
 .tab-item:hover { color: #1f2937; }
 .tab-item.active {
-  color: var(--color-primary, #e30707);
-  border-bottom-color: var(--color-primary, #e30707);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 500;
 }
 

@@ -102,7 +102,7 @@
         </div>
 
         <!-- Dashed colorful divider -->
-        <div class="h-1.5 w-full" style="background: repeating-linear-gradient(90deg, #e30707 0px, #e30707 20px, transparent 20px, transparent 24px, #3b82f6 24px, #3b82f6 44px, transparent 44px, transparent 48px)"></div>
+        <div class="h-1.5 w-full" style="background: repeating-linear-gradient(90deg, var(--color-primary) 0px, var(--color-primary) 20px, transparent 20px, transparent 24px, var(--color-primary-light) 24px, var(--color-primary-light) 44px, transparent 44px, transparent 48px)"></div>
       </div>
 
       <!-- ===== Address ===== -->

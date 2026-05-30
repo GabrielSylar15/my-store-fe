@@ -2,7 +2,7 @@
   <footer class="footer">
     <!-- ===== Top: link columns ===== -->
     <div class="max-w-7xl mx-auto px-4 py-10">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-8 text-sm text-gray-600">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-8 text-sm text-dark-text-muted">
         <nav v-for="col in linkColumns" :key="col.title" :aria-label="col.title">
           <h3 class="footer-heading">{{ col.title }}</h3>
           <ul class="space-y-2.5">
@@ -33,7 +33,7 @@
         <div>
           <h3 class="footer-heading">Tải Ứng Dụng GIADE</h3>
           <div class="flex items-start gap-3">
-            <div class="w-20 h-20 bg-gray-100 border border-gray-200 rounded flex items-center justify-center text-gray-400 flex-shrink-0">
+            <div class="w-20 h-20 bg-dark-surface border border-dark-border rounded flex items-center justify-center text-dark-text-muted flex-shrink-0">
               <iconify-icon icon="material-symbols:qr-code-2" width="56" height="56"></iconify-icon>
             </div>
             <div class="flex flex-col gap-1.5 min-w-0">
@@ -47,7 +47,7 @@
       </div>
 
       <!-- ===== Mid: payment + shipping partners ===== -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 pt-8 border-t border-gray-200">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 pt-8 border-t border-dark-border">
         <div>
           <h3 class="footer-heading">Phương Thức Thanh Toán</h3>
           <div class="flex flex-wrap items-center gap-2">
@@ -64,15 +64,15 @@
     </div>
 
     <!-- ===== Bottom bar ===== -->
-    <div class="bg-[#fbfbfb] border-t border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 py-5 text-xs text-gray-500">
+    <div class="bg-dark-bottom border-t border-dark-bottom">
+      <div class="max-w-7xl mx-auto px-4 py-5 text-xs text-dark-text-subtle">
         <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-3">
           <a v-for="l in legalLinks" :key="l" class="footer-link" href="#" :title="l">{{ l }}</a>
         </div>
-        <p class="text-center m-0">
+        <p class="text-center m-0 text-dark-text-subtle">
           © {{ year }} GIADE. Tất cả các quyền được bảo lưu.
         </p>
-        <p class="text-center mt-1 m-0 text-gray-400">
+        <p class="text-center mt-1 m-0 text-dark-text-subtle">
           Quốc gia &amp; Khu vực: Việt Nam
         </p>
       </div>
@@ -148,14 +148,13 @@ const year = computed(() => new Date().getFullYear())
 <style scoped>
 .footer {
   margin-top: 40px;
-  background: var(--color-background-component, #fff);
-  border-top: 4px solid var(--color-primary, #e30707);
+  background: var(--color-dark-base);
 }
 
 .footer-heading {
   font-size: 12px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-dark-text);
   text-transform: uppercase;
   letter-spacing: .04em;
   margin-bottom: 14px;
@@ -164,13 +163,13 @@ const year = computed(() => new Date().getFullYear())
 .footer-link {
   display: inline-block;
   font-size: 13px;
-  color: #4b5563;
+  color: var(--color-dark-text-subtle);
   transition: color .15s;
   text-decoration: none;
   cursor: pointer;
 }
 .footer-link:hover {
-  color: var(--color-primary, #e30707);
+  color: var(--color-primary-light);
 }
 
 /* iconify-icon is a custom element with default `display: inline`,
@@ -193,17 +192,17 @@ const year = computed(() => new Date().getFullYear())
   gap: 8px;
   padding: 6px 10px;
   font-size: 12px;
-  color: #4b5563;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  color: var(--color-dark-text-muted);
+  background: var(--color-dark-surface);
+  border: 1px solid var(--color-dark-border);
   border-radius: 4px;
   text-decoration: none;
   transition: border-color .15s, color .15s;
   min-width: 110px;
 }
 .app-badge:hover {
-  border-color: var(--color-primary, #e30707);
-  color: var(--color-primary, #e30707);
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
 }
 
 .logo-chip {
@@ -213,9 +212,9 @@ const year = computed(() => new Date().getFullYear())
   padding: 0 10px;
   font-size: 11px;
   font-weight: 500;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-dark-surface);
+  border: 1px solid var(--color-dark-border);
   border-radius: 3px;
-  color: #4b5563;
+  color: var(--color-dark-text-muted);
 }
 </style>

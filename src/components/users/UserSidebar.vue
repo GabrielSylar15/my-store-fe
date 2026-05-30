@@ -109,7 +109,7 @@ const isActive = (to: string, exact = false) => {
   text-decoration: none;
 }
 .group-link.active {
-  color: var(--color-primary, #e30707);
+  color: var(--color-primary);
 }
 
 .sub-link {
@@ -120,9 +120,9 @@ const isActive = (to: string, exact = false) => {
   padding: 2px 0;
 }
 .sub-link:hover {
-  color: var(--color-primary, #e30707);
+  color: var(--color-primary);
 }
 .sub-link.active {
-  color: var(--color-primary, #e30707);
+  color: var(--color-primary);
 }
 </style>

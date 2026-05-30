@@ -450,12 +450,12 @@ onMounted(async () => {
   height: 4px;
   background: repeating-linear-gradient(
       45deg,
-      #ee4d2d 0,
-      #ee4d2d 20px,
+      var(--color-primary) 0,
+      var(--color-primary) 20px,
       transparent 20px,
       transparent 30px,
-      #5fbedb 30px,
-      #5fbedb 50px,
+      var(--color-primary-light) 30px,
+      var(--color-primary-light) 50px,
       transparent 50px,
       transparent 60px
   );

@@ -3,11 +3,26 @@
 @theme {
     --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
 
-    --color-primary: #ee4d2d;
-    --color-primary-dark: #d73211;
-    --color-background-page: #f5f5f5;
+    /* ── Brand ─────────────────────────────────────────────────── */
+    --color-primary:       #0d9488;   /* teal-600  — buttons, links, active states    */
+    --color-primary-dark:  #0f766e;   /* teal-700  — hover / pressed                  */
+    --color-primary-light: #5eead4;   /* teal-300  — hover text on dark, gradients    */
+
+    /* ── Light surfaces (content area) ──────────────────────────── */
+    --color-background-page:      #f0fdfa;   /* teal-50, subtle fresh tint             */
     --color-background-component: #fff;
-    --color-border-base: #e8e8e8;
+    --color-border-base:          #e2e8f0;
+
+    /* ── Dark chrome (footer) ───────────────────────────────────── */
+    --color-dark-base:    #134e4a;   /* teal-900 — footer body background             */
+    --color-dark-surface: #115e59;   /* teal-800 — elevated elements in dark areas    */
+    --color-dark-border:  #0f766e;   /* teal-700 — borders inside dark areas          */
+    --color-dark-bottom:  #0c3835;   /* deeper teal — footer bottom bar               */
+
+    /* ── Text on dark backgrounds ───────────────────────────────── */
+    --color-dark-text:        #f0fdfa;   /* teal-50  — headings / labels on dark      */
+    --color-dark-text-muted:  #ccfbf1;   /* teal-100 — body text on dark              */
+    --color-dark-text-subtle: #99f6e4;   /* teal-200 — copyright / tertiary on dark   */
 }
 
 *, *::before, *::after {

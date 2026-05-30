@@ -2,6 +2,15 @@
 
 Vue 3 ecommerce frontend (GIADE). Vietnamese UI. Active features: home, product list/search, product detail, Google OAuth login. Stubs (not yet wired): cart, checkout, order detail, admin, user profile.
 
+## Memory
+
+Project memory lives in `.claude/memory/`. At the start of every session, read `.claude/memory/MEMORY.md` for the index, then read any files relevant to the current task before proceeding.
+
+- `.claude/memory/MEMORY.md` — index of all memory files
+- `.claude/memory/project-giade-context.md` — what GIADE sells, target audience
+- `.claude/memory/design-color-system.md` — full color token system, teal palette, how to change colors
+- `.claude/memory/feedback-vn-ecommerce-ux.md` — UX conventions for Vietnamese ecommerce
+
 ## Run
 
 ```bash

@@ -141,12 +141,12 @@ const currency = (n: number) =>
   border-color: #d1d5db;
 }
 .delivery-tile.active {
-  border-color: var(--color-primary, #e30707);
-  color: var(--color-primary, #e30707);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
   background: #fff;
 }
 .delivery-tile.active :deep(iconify-icon) {
-  color: var(--color-primary, #e30707);
+  color: var(--color-primary);
 }
 
 .method-row + .method-row {

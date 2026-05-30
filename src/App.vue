@@ -2,8 +2,8 @@
   <a-config-provider
     :theme="{
       token: {
-        colorPrimary: '#ee4d2d',
-        colorLink: '#ee4d2d',
+        colorPrimary: '#0d9488',   /* mirrors --color-primary in tailwind.css */
+        colorLink: '#0d9488',      /* mirrors --color-primary in tailwind.css */
         borderRadius: 4,
         fontFamily: '\'Be Vietnam Pro\', ui-sans-serif, system-ui, sans-serif',
       },

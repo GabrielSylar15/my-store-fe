@@ -14,7 +14,7 @@
         <div class="flex items-center space-x-2 hover:cursor-pointer">
           <div class="relative">
             <span
-                class="absolute -top-1 -right-1 bg-white text-xs rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center text-primary font-bold leading-none">3</span>
+                class="absolute -top-2 -right-2 bg-white text-[10px] rounded-full min-w-[16px] h-[16px] px-0.5 flex items-center justify-center text-primary font-bold leading-none">3</span>
             <iconify-icon icon="line-md:bell-loop" width="24" height="24"></iconify-icon>
           </div>
           <span>Thông Báo</span>

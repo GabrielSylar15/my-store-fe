@@ -214,8 +214,8 @@ const onConfirm = () => {
   padding: 0;
 }
 .voucher-card.selected {
-  border-color: var(--color-primary, #e30707);
-  box-shadow: 0 0 0 1px var(--color-primary, #e30707) inset;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary) inset;
 }
 .voucher-card.disabled {
   cursor: not-allowed;
@@ -248,7 +248,7 @@ const onConfirm = () => {
   top: 6px;
   right: 6px;
   background: #fdecec;
-  color: var(--color-primary, #e30707);
+  color: var(--color-primary);
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 999px;
