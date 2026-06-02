@@ -20,7 +20,7 @@ import { onMounted } from 'vue'
 import AuthHeader from '@/components/AuthHeader.vue'
 import Footer from '@/components/Footer.vue'
 import OrderDetailComponent from '@/components/order/OrderDetail.vue'
-import UserSidebar from '@/components/users/UserSidebar.vue'
+import UserSidebar from '@/components/user/UserSidebar.vue'
 
 onMounted(() => { document.title = 'Chi Tiết Đơn Hàng | GIADE' })
 </script>

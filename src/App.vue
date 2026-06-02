@@ -14,4 +14,18 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+import { useCartStore } from '@/stores/cartStore'
+import { useUserStore } from '@/stores/userStore'
+import { getAccessToken } from '@/core'
+
+const cartStore = useCartStore()
+const userStore = useUserStore()
+
+onMounted(() => {
+  if (getAccessToken()) {
+    cartStore.loadCart()
+    userStore.loadProfile()
+  }
+})
 </script>

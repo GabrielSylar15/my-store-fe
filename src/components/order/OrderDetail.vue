@@ -65,8 +65,8 @@
 
       <!-- ===== Actions (two-column: text left, stacked buttons right) ===== -->
       <div class="bg-white rounded shadow mb-3">
-        <!-- Review row — only when COMPLETED -->
-        <div v-if="order.status === 'COMPLETED'"
+        <!-- Review row -->
+        <div v-if="order.reviewable"
              class="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-100">
           <p class="text-sm text-gray-700 m-0">
             Đánh giá sản phẩm trước ngày
@@ -77,19 +77,16 @@
         </div>
 
         <!-- Liên hệ người bán row -->
-        <div v-if="order.status === 'COMPLETED'"
+        <div v-if="order.reviewable"
              class="flex items-center justify-end px-6 py-3 border-b border-gray-100">
           <a-button class="!min-w-[220px] !h-10" @click="onContactSeller">Liên Hệ Người Bán</a-button>
         </div>
 
         <!-- Mua lại row -->
-        <div class="flex items-center justify-between gap-4 px-6 py-3 border-b border-gray-100">
-          <span></span>
-          <div class="flex gap-2">
-            <a-button v-if="canCancel" danger @click="onCancel">Hủy đơn</a-button>
-            <a-button v-if="canConfirmReceived" type="primary" @click="onConfirmReceived">Đã nhận hàng</a-button>
-            <a-button class="!min-w-[220px] !h-10" @click="onBuyAgain">Mua Lại</a-button>
-          </div>
+        <div class="flex items-center justify-end gap-2 px-6 py-3 border-b border-gray-100">
+          <a-button v-if="canCancel" danger class="!min-w-[120px] !h-10" @click="onCancel">Hủy đơn</a-button>
+          <a-button v-if="canConfirmReceived" type="primary" class="!min-w-[220px] !h-10" @click="onConfirmReceived">Đã nhận hàng</a-button>
+          <a-button class="!min-w-[220px] !h-10" :loading="buyingAgain" @click="onBuyAgain">Mua Lại</a-button>
         </div>
 
         <!-- Invoice row -->
@@ -167,6 +164,12 @@
 
     </template>
   </a-spin>
+
+  <ReviewModal
+    :order="reviewOrder"
+    @close="reviewOrder = null"
+    @done="reviewOrder = null"
+  />
 </template>
 
 <script setup lang="ts">
@@ -179,8 +182,12 @@ import {
   ORDER_API_STATUS_LABEL,
   ORDER_API_STATUS_COLOR,
 } from '@/services/order/orderService'
-import { currency, getImageUrl, onImgError } from './orderHelpers'
+import { currency, getImageUrl, onImgError } from '@/helpers/format'
 import { formatPhone } from '@/helpers/format'
+import ReviewModal from '@/components/order/ReviewModal.vue'
+import { useCartStore } from '@/stores/cartStore'
+
+const cartStore = useCartStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -246,9 +253,30 @@ const onCancel = () => {
 }
 
 const onConfirmReceived = () => { message.info('Tính năng đang được phát triển') }
-const onReview         = () => { message.info('Tính năng đang được phát triển') }
+
+const reviewOrder = ref<OrderApiDetail | null>(null)
+const onReview = () => { reviewOrder.value = order.value }
+
 const onContactSeller  = () => { message.info('Tính năng đang được phát triển') }
-const onBuyAgain       = () => { message.info('Tính năng đang được phát triển') }
+
+const buyingAgain = ref(false)
+const onBuyAgain = async () => {
+  if (!order.value?.items.length) return
+  buyingAgain.value = true
+  try {
+    for (const item of order.value.items) {
+      await cartStore.addItem(item.product_id, item.product_variant_id, item.quantity)
+    }
+    const keys = order.value.items.map(i => `${i.product_id}-${i.product_variant_id}`)
+    sessionStorage.setItem('cart_preselect', JSON.stringify(keys))
+    router.push('/cart')
+  } catch {
+    message.error('Không thể thêm vào giỏ hàng')
+  } finally {
+    buyingAgain.value = false
+  }
+}
+
 const onRequestInvoice = () => { message.info('Tính năng đang được phát triển') }
 
 onMounted(load)

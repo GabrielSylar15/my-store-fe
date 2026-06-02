@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-x-auto w-full min-w-[800px] bg-background-page">
+  <div class="overflow-x-auto w-full min-w-[800px] bg-background-page min-h-screen">
     <div class="fixed top-0 left-0 right-0 z-50 bg-white shadow">
       <AuthHeader/>
     </div>
@@ -33,6 +33,6 @@ import HotSearchProduct from "@/components/inventory/HotSearchProduct.vue";
 import ProductSuggestion from "@/components/inventory/ProductSuggestion.vue";
 
 onMounted(() => {
-  document.title = "Đăng nhập tài khoản - Mua sắm online | GIADE"
+  document.title = "Trang Chủ | GIADE"
 })
 </script>

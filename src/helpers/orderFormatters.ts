@@ -1,7 +1,4 @@
-import type { OrderItem, OrderStatus } from '@/services/order/orderService'
-
-// Re-export shared format helpers so existing order components keep working.
-export { currency, getImageUrl, onImgError, formatDateTime } from '@/helpers/format'
+import type { OrderItem } from '@/services/order/orderService'
 
 /** Build the "Color: Red, Size: M" label for a specific cart/order item. */
 export const variantLabel = (i: OrderItem): string => {
@@ -13,15 +10,6 @@ export const variantLabel = (i: OrderItem): string => {
     .map((optIdx, tierIdx) => p.tier_variants?.[tierIdx]?.options?.[optIdx - 1] ?? '')
     .filter(Boolean)
     .join(', ')
-}
-
-export const STATUS_COLOR: Record<OrderStatus, string> = {
-  PENDING:   '#faad14',
-  CONFIRMED: '#1890ff',
-  SHIPPING:  '#1890ff',
-  DELIVERED: '#52c41a',
-  COMPLETED: '#52c41a',
-  CANCELLED: '#bfbfbf',
 }
 
 export const PAYMENT_LABEL: Record<'cod' | 'bank' | 'momo', string> = {

@@ -93,7 +93,7 @@
                   :value="item.quantity"
                   :min="1"
                   :max="item.product?.stock_quantity ?? 99"
-                  class="qty-input w-12 h-9 text-center text-sm border-x border-gray-300 focus:outline-none focus:bg-orange-50 transition"
+                  class="qty-input w-12 h-9 text-center text-sm border-x border-gray-300 focus:outline-none focus:bg-primary/10 transition"
                   @input="onQtyInput(item, $event)"
                   @blur="onQtyBlur(item, $event)"
               />
@@ -207,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
@@ -434,8 +434,20 @@ const checkout = () => {
 
 // ─── Data loading ─────────────────────────────────────────────────────────────
 onMounted(() => {
-  // Force a fresh load so Cart page always reflects the latest server state
   cartStore.loadCart(true)
+
+  const raw = sessionStorage.getItem('cart_preselect')
+  if (raw) {
+    sessionStorage.removeItem('cart_preselect')
+    const keys: string[] = JSON.parse(raw)
+    // Apply pre-selection once loading finishes
+    const stop = watch(loading, (isLoading) => {
+      if (!isLoading) {
+        checkedSet.value = new Set(keys.filter(k => enrichedItems.value.some(i => itemKey(i) === k)))
+        stop()
+      }
+    }, { immediate: true })
+  }
 })
 </script>
 

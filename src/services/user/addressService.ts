@@ -1,33 +1,47 @@
-// NOTE: Mocked — backend API for addresses not yet implemented.
-// Persists to localStorage so the checkout UX can be developed end-to-end.
+import { httpClient } from '@/core'
+import { parsePhoneToServer, formatPhone } from '@/helpers/format'
 
 export interface UserAddress {
   id: number
   full_name: string
-  phone_number: string   // store as string for display; convert to number when sending order
-  address: string        // street / building
+  phone_number: string   // string for display; use parsePhoneToServer when sending to API
+  address: string
+  ward: string
   district: string
   city: string
   is_default: boolean
 }
 
-const STORAGE_KEY = 'mock_user_addresses'
-
-function read(): UserAddress[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch { return [] }
+/** Raw shape returned by the backend (snake_case, recipient_name). */
+interface ShippingAddressApi {
+  id: number
+  recipient_name: string
+  phone_number: number | string
+  address: string
+  ward: string
+  district: string
+  city: string
+  is_default: boolean
 }
 
-function write(list: UserAddress[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+function fromApi(raw: ShippingAddressApi): UserAddress {
+  return {
+    id: raw.id,
+    full_name: raw.recipient_name ?? '',
+    phone_number: formatPhone(raw.phone_number ?? ''),
+    address: raw.address ?? '',
+    ward: raw.ward ?? '',
+    district: raw.district ?? '',
+    city: raw.city ?? '',
+    is_default: raw.is_default ?? false,
+  }
 }
 
 class AddressService {
   async list(): Promise<UserAddress[]> {
-    await new Promise(r => setTimeout(r, 150))
-    return read()
+    const res = await httpClient.get('/api/v1/shipping_addresses')
+    if (!res.success) return []
+    return (res.data ?? []).map(fromApi)
   }
 
   async getDefault(): Promise<UserAddress | null> {
@@ -35,37 +49,42 @@ class AddressService {
     return list.find(a => a.is_default) ?? list[0] ?? null
   }
 
-  async create(data: Omit<UserAddress, 'id' | 'is_default'> & { is_default?: boolean }): Promise<UserAddress> {
-    const list = read()
-    const id = Date.now()
-    const isDefault = data.is_default ?? list.length === 0
-    if (isDefault) list.forEach(a => (a.is_default = false))
-    const next: UserAddress = { ...data, id, is_default: isDefault }
-    list.push(next)
-    write(list)
-    return next
+  async create(data: Omit<UserAddress, 'id'>): Promise<UserAddress> {
+    const res = await httpClient.post('/api/v1/shipping_addresses', {
+      recipient_name: data.full_name,
+      phone_number: parsePhoneToServer(data.phone_number),
+      address: data.address,
+      ward: data.ward,
+      district: data.district,
+      city: data.city,
+      is_default: data.is_default,
+    })
+    if (!res.success) throw new Error(res.message ?? 'Không thể lưu địa chỉ')
+    return fromApi(res.data)
   }
 
-  async update(id: number, data: Partial<Omit<UserAddress, 'id'>>): Promise<UserAddress | null> {
-    const list = read()
-    const idx = list.findIndex(a => a.id === id)
-    if (idx === -1) return null
-    if (data.is_default) list.forEach(a => (a.is_default = false))
-    list[idx] = { ...list[idx], ...data }
-    write(list)
-    return list[idx]
+  async update(id: number, data: Partial<Omit<UserAddress, 'id'>>): Promise<UserAddress> {
+    const res = await httpClient.put(`/api/v1/shipping_addresses/${id}`, {
+      recipient_name: data.full_name,
+      phone_number: data.phone_number ? parsePhoneToServer(data.phone_number) : undefined,
+      address: data.address,
+      ward: data.ward,
+      district: data.district,
+      city: data.city,
+      is_default: data.is_default,
+    })
+    if (!res.success) throw new Error(res.message ?? 'Không thể cập nhật địa chỉ')
+    return fromApi(res.data)
   }
 
   async setDefault(id: number): Promise<void> {
-    const list = read()
-    list.forEach(a => (a.is_default = a.id === id))
-    write(list)
+    const res = await httpClient.put(`/api/v1/shipping_addresses/${id}/default`)
+    if (!res.success) throw new Error(res.message ?? 'Không thể đặt địa chỉ mặc định')
   }
 
   async remove(id: number): Promise<void> {
-    const list = read().filter(a => a.id !== id)
-    if (list.length && !list.some(a => a.is_default)) list[0].is_default = true
-    write(list)
+    const res = await httpClient.delete(`/api/v1/shipping_addresses/${id}`)
+    if (!res.success) throw new Error(res.message ?? 'Không thể xóa địa chỉ')
   }
 }
 

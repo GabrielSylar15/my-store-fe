@@ -18,7 +18,7 @@
     </template>
 
     <!-- ===== Code input ===== -->
-    <div class="flex items-center gap-3 bg-[#fafafa] border border-gray-100 rounded px-4 py-3 mb-5">
+    <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded px-4 py-3 mb-5">
       <span class="text-sm text-gray-600 flex-shrink-0">Mã Voucher</span>
       <a-input v-model:value="code" placeholder="Mã GIADE Voucher" />
       <a-button
@@ -47,7 +47,7 @@
           <!-- left tile -->
           <div
               class="voucher-tile flex flex-col items-center justify-center px-4 py-3 text-white relative flex-shrink-0"
-              :class="v.kind === 'freeship' ? 'bg-[#26AAA4]' : 'bg-primary'"
+              :class="v.kind === 'freeship' ? 'bg-primary-dark' : 'bg-primary'"
           >
             <span v-if="v.city" class="city-tag">{{ v.city }}</span>
             <p v-if="v.kind === 'freeship'" class="m-0 font-bold text-lg leading-none">FREE</p>
@@ -64,7 +64,7 @@
             <p class="m-0 text-xs text-gray-500 mt-1.5">
               <template v-if="v.usagePercent">Đã dùng {{ v.usagePercent }}%, </template>
               HSD: {{ v.expiry }}
-              <a class="text-sky-500 ml-1">Điều Kiện</a>
+              <a class="text-primary ml-1">Điều Kiện</a>
             </p>
             <!-- usage bar -->
             <div v-if="v.usagePercent" class="usage-bar mt-1.5">

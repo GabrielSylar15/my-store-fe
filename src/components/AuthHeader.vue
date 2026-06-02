@@ -29,8 +29,8 @@
             @mouseleave="showDropdown = false"
         >
           <div class="flex items-center space-x-2 hover:underline px-1 py-1 cursor-pointer">
-            <img src="https://i.pravatar.cc/32" alt="Avatar" class="w-6 h-6 rounded-full"/>
-            <span>sylar1505</span>
+            <img :src="avatarSrc" alt="Avatar" class="w-6 h-6 rounded-full object-cover" @error="(e) => (e.target as HTMLImageElement).src = DEFAULT_AVATAR"/>
+            <span>{{ displayName }}</span>
             <i class="fas fa-chevron-down text-xs"></i>
           </div>
 
@@ -63,12 +63,13 @@
           <div class="flex bg-white rounded border items-center">
             <input
                 type="text"
-                v-model="q"
+                v-model="localQuery"
                 placeholder="HÈ RỰC SẮC XINH - 45%"
                 class="flex-1 pl-[8px] focus:outline-none text-black bg-transparent"
                 @keyup.enter="onSearch"
             />
             <button class="w-15 h-9 bg-primary flex items-center justify-center hover:active:bg-primary-100:5 rounded cursor-pointer"
+                    aria-label="Tìm kiếm"
                     @click="onSearch">
               <iconify-icon icon="material-symbols-light:search-rounded" width="20" height="20"
                             class="text-white"></iconify-icon>
@@ -184,6 +185,7 @@ import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from 'vue-router'
 import {useSearchStore} from '@/stores/searchStore'
 import {useCartStore} from '@/stores/cartStore'
+import {useUserStore} from '@/stores/userStore'
 import type {EnrichedCartItem} from '@/stores/cartStore'
 
 const showDropdown = ref(false)
@@ -191,6 +193,13 @@ const router = useRouter()
 const route = useRoute()
 const searchStore = useSearchStore()
 const cartStore = useCartStore()
+const userStore = useUserStore()
+
+const DEFAULT_AVATAR = 'https://placehold.co/32x32?text=U'
+const avatarSrc = computed(() =>
+  userStore.profile?.avatar ? getImageUrl(userStore.profile.avatar) : DEFAULT_AVATAR
+)
+const displayName = computed(() => userStore.profile?.name || userStore.profile?.email || 'Tài khoản')
 
 // ─── Mini-cart hover logic ─────────────────────────────────────────────────────
 const showCartDropdown = ref(false)
@@ -199,8 +208,6 @@ let hideTimer: ReturnType<typeof setTimeout> | null = null
 const onCartEnter = () => {
   if (hideTimer) { clearTimeout(hideTimer); hideTimer = null }
   showCartDropdown.value = true
-  // Lazy-load cart data on first hover
-  cartStore.loadCart()
 }
 
 const onCartLeave = () => {
@@ -228,15 +235,21 @@ const currency = (n: number) =>
     n.toLocaleString('vi-VN', {style: 'currency', currency: 'VND', maximumFractionDigits: 0})
 
 // ─── Search ───────────────────────────────────────────────────────────────────
-const q = computed({
-  get: () => searchStore.text,
-  set: (v: string) => searchStore.setText(v ?? '')
-})
+// localQuery drives the input directly — never synced to the store during typing
+// so Vue never rewrites the DOM value mid-keystroke (fixes ibus-bamboo double-space bug)
+const localQuery = ref(searchStore.text)
+
+// Keep localQuery in sync when the store changes from outside (URL navigation)
+watch(
+    () => searchStore.text,
+    (val) => { if (val !== localQuery.value) localQuery.value = val }
+)
 
 onMounted(() => {
   const fromUrl = (route.query.text as string) || ''
-  if (fromUrl && fromUrl !== searchStore.text) {
+  if (fromUrl) {
     searchStore.setText(fromUrl)
+    localQuery.value = fromUrl
   }
 })
 
@@ -244,13 +257,16 @@ watch(
     () => route.query.text,
     (t) => {
       const next = (t as string) ?? ''
-      if (next !== searchStore.text) searchStore.setText(next)
-    },
-    {immediate: true}
+      if (next !== searchStore.text) {
+        searchStore.setText(next)
+        localQuery.value = next
+      }
+    }
 )
 
 const onSearch = () => {
-  const text = (searchStore.text ?? '').trim()
+  const text = localQuery.value.trim()
+  localQuery.value = text
   searchStore.setText(text)
 
   if (route.path !== '/product') {

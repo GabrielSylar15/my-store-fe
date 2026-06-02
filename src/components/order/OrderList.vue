@@ -64,7 +64,7 @@
         <div
             v-for="item in o.items"
             :key="item.product_variant_id"
-            class="flex items-center gap-4 px-6 py-4 border-b border-gray-100 cursor-pointer hover:bg-[#fafafa] transition"
+            class="flex items-center gap-4 px-6 py-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition"
             @click="router.push(`/user/orders/${o.alias}`)"
         >
           <img
@@ -97,8 +97,8 @@
 
         <!-- Actions footer -->
         <div class="px-6 py-4 flex items-center justify-between flex-wrap gap-3">
-          <!-- Left: review hint for COMPLETED -->
-          <div v-if="o.status === 'COMPLETED'" class="text-xs text-gray-500 leading-relaxed">
+          <!-- Left: review hint -->
+          <div v-if="o.reviewable" class="text-xs text-gray-500 leading-relaxed">
             <p class="m-0">Đánh giá sản phẩm trước <span class="underline">{{ reviewDeadline(o.created_at) }}</span></p>
             <p class="m-0 text-primary">Đánh giá ngay và nhận 200 Xu</p>
           </div>
@@ -121,12 +121,12 @@
                 @click.stop="onConfirmReceived(o)"
             >Đã Nhận Hàng</a-button>
             <a-button
-                v-if="o.status === 'COMPLETED'"
+                v-if="o.reviewable"
                 type="primary"
-                @click.stop="onReview"
+                @click.stop="onReview(o)"
             >Đánh Giá</a-button>
             <a-button @click.stop="onContactSeller">Liên Hệ Người Bán</a-button>
-            <a-button @click.stop="onBuyAgain">Mua Lại</a-button>
+            <a-button @click.stop="onBuyAgain(o)">Mua Lại</a-button>
           </div>
         </div>
       </div>
@@ -136,6 +136,12 @@
         <a-button :loading="loadingMore" @click="loadMore">Xem thêm</a-button>
       </div>
     </a-spin>
+
+    <ReviewModal
+      :order="reviewOrder"
+      @close="reviewOrder = null"
+      @done="reviewOrder = null"
+    />
   </div>
 </template>
 
@@ -151,6 +157,10 @@ import {
   ORDER_API_STATUS_COLOR,
 } from '@/services/order/orderService'
 import { currency, getImageUrl, onImgError, formatDateTime } from '@/helpers/format'
+import ReviewModal from '@/components/order/ReviewModal.vue'
+import { useCartStore } from '@/stores/cartStore'
+
+const cartStore = useCartStore()
 
 const router = useRouter()
 
@@ -228,9 +238,24 @@ const onConfirmReceived = (_o: OrderApiListItem) => {
   message.info('Tính năng đang được phát triển')
 }
 
-const onReview         = () => { message.info('Tính năng đang được phát triển') }
-const onContactSeller  = () => { message.info('Tính năng đang được phát triển') }
-const onBuyAgain       = () => { message.info('Tính năng đang được phát triển') }
+const reviewOrder = ref<OrderApiListItem | null>(null)
+const onReview = (o: OrderApiListItem) => { reviewOrder.value = o }
+
+const onContactSeller = () => { message.info('Tính năng đang được phát triển') }
+
+const onBuyAgain = async (o: OrderApiListItem) => {
+  if (!o.items.length) return
+  try {
+    for (const item of o.items) {
+      await cartStore.addItem(item.product_id, item.product_variant_id, item.quantity)
+    }
+    const keys = o.items.map(i => `${i.product_id}-${i.product_variant_id}`)
+    sessionStorage.setItem('cart_preselect', JSON.stringify(keys))
+    router.push('/cart')
+  } catch {
+    message.error('Không thể thêm vào giỏ hàng')
+  }
+}
 
 load()
 </script>

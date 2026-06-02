@@ -36,6 +36,7 @@ export interface OrderApiVariant {
 }
 
 export interface OrderApiItem {
+  product_id: number
   product_variant_id: number
   quantity: number
   product_name: string
@@ -47,6 +48,7 @@ export interface OrderApiItem {
 }
 
 export interface OrderApiDetail {
+  id: number
   alias: string
   note?: string
   address: string
@@ -56,14 +58,13 @@ export interface OrderApiDetail {
   created_by: number
   created_at: string
   status: OrderApiStatus
+  total_price: number
+  total_bill: number
+  reviewable: boolean
   items: OrderApiItem[]
 }
 
-export interface OrderApiListItem extends OrderApiDetail {
-  id: number
-  total_price: number
-  total_bill: number
-}
+export interface OrderApiListItem extends OrderApiDetail {}
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -219,50 +220,16 @@ class OrderService {
     writeAll(all)
   }
 
-  // ─── Read APIs (mock) — swap for real endpoints when ready ─────────────
-  async list(): Promise<Order[]> {
-    await new Promise(r => setTimeout(r, 150))
-    return readAll()
-  }
-
+  // ─── Read API (mock) — used by OrderSuccess until a GET-by-id endpoint exists ──
   async getById(id: number): Promise<Order | null> {
     await new Promise(r => setTimeout(r, 150))
     return readAll().find(o => o.id === id) ?? null
   }
 
-  async cancel(id: number, reason?: string): Promise<Order | null> {
-    const all = readAll()
-    const o = all.find(x => x.id === id)
-    if (!o) return null
-    if (o.status !== 'PENDING' && o.status !== 'CONFIRMED') return o
-    o.status = 'CANCELLED'
-    o.status_history.push({
-      status: 'CANCELLED',
-      at: new Date().toISOString(),
-      message: reason || 'Đã hủy bởi người mua',
-    })
-    writeAll(all)
-    return o
-  }
-
-  async confirmReceived(id: number): Promise<Order | null> {
-    const all = readAll()
-    const o = all.find(x => x.id === id)
-    if (!o) return null
-    o.status = 'COMPLETED'
-    o.status_history.push({
-      status: 'COMPLETED',
-      at: new Date().toISOString(),
-      message: 'Người mua đã xác nhận nhận hàng',
-    })
-    writeAll(all)
-    return o
-  }
-
   // ─── Real API ───────────────────────────────────────────────────────────────
   async listOrders(status?: OrderApiStatus, lastId?: number): Promise<OrderApiListItem[]> {
     try {
-      const params: Record<string, any> = {}
+      const params: Record<string, string | number> = {}
       if (status) params.status = status
       if (lastId) params.last_id = lastId
       const res = await httpClient.get('/api/v1/orders', { params })

@@ -76,8 +76,8 @@
 
           <!-- Stats row -->
           <div class="flex items-center gap-3 text-sm text-gray-500 pb-3 border-b border-gray-100 flex-wrap">
-            <span class="text-primary font-semibold underline cursor-pointer">4.8</span>
-            <a-rate :value="4.8" allow-half disabled />
+            <span class="text-primary font-semibold underline cursor-pointer">{{ reviewAvg }}</span>
+            <a-rate :value="Number(reviewAvg)" allow-half disabled />
             <span class="text-gray-300">|</span>
             <span>{{ product.total_sold.toLocaleString('vi-VN') }} Đã Bán</span>
             <span class="text-gray-300">|</span>
@@ -252,44 +252,67 @@
             <div class="border border-orange-100 bg-orange-50/40 rounded p-4 flex flex-col md:flex-row items-start gap-6 mb-6">
               <!-- Overall score -->
               <div class="flex flex-col items-center min-w-[90px]">
-                <span class="text-5xl font-light text-primary leading-none">{{ reviewMeta.overall }}</span>
+                <span class="text-5xl font-light text-primary leading-none">{{ reviewAvg }}</span>
                 <span class="text-gray-400 text-xs mt-1">trên 5</span>
-                <a-rate :value="reviewMeta.overall" allow-half disabled class="mt-1" />
+                <a-rate :value="Number(reviewAvg)" allow-half disabled class="mt-1" />
               </div>
 
               <!-- Filter buttons -->
               <div class="flex flex-wrap gap-2">
                 <button
                   v-for="f in reviewFilters"
-                  :key="f.key"
+                  :key="String(f.key)"
                   type="button"
                   class="px-3 py-1 text-sm border transition"
                   :class="activeReviewFilter === f.key
                     ? 'border-primary text-primary bg-primary/10'
                     : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'"
-                  @click="activeReviewFilter = f.key"
+                  @click="setReviewFilter(f.key)"
                 >
                   {{ f.label }}
                 </button>
               </div>
             </div>
 
+            <!-- Loading state (initial load) -->
+            <div v-if="reviewsLoading && !reviews.length" class="py-10 flex justify-center">
+              <a-spin :spinning="true" tip="Đang tải đánh giá..." />
+            </div>
+
+            <!-- Empty state -->
+            <div v-else-if="!reviews.length && !reviewsLoading" class="py-10 text-center text-gray-400 text-sm">
+              Chưa có đánh giá nào
+            </div>
+
             <!-- Review list -->
-            <div class="divide-y divide-gray-100">
-              <div v-for="review in visibleReviews" :key="review.id" class="py-5">
+            <div v-else class="divide-y divide-gray-100">
+              <div v-for="review in reviews" :key="review.id" class="py-5">
                 <div class="flex gap-3">
-                  <!-- Avatar -->
-                  <img :src="review.avatar" :alt="review.username" class="w-10 h-10 rounded-full object-cover flex-shrink-0 bg-gray-200" />
+                  <!-- Avatar with fallback initial -->
+                  <img
+                    v-if="review.user_info.avatar"
+                    :src="getImageUrl(review.user_info.avatar)"
+                    :alt="review.user_info.username"
+                    class="w-10 h-10 rounded-full object-cover flex-shrink-0 bg-gray-200"
+                  />
+                  <div
+                    v-else
+                    class="w-10 h-10 rounded-full flex-shrink-0 bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm"
+                  >
+                    {{ review.user_info.username.charAt(0).toUpperCase() }}
+                  </div>
 
                   <!-- Content -->
                   <div class="flex-1 min-w-0">
-                    <div class="font-medium text-sm text-gray-800">{{ review.username }}</div>
-                    <a-rate :value="review.rating" disabled class="text-xs" />
+                    <div class="font-medium text-sm text-gray-800">{{ review.user_info.username }}</div>
+                    <a-rate :value="review.star_rating" disabled class="text-xs" />
                     <div class="text-xs text-gray-400 mt-0.5">
-                      {{ review.date }}
-                      <span v-if="review.variant" class="ml-2">Phân loại hàng: {{ review.variant }}</span>
+                      {{ formatReviewDate(review.created_at) }}
+                      <span v-if="review.product_variant" class="ml-2">
+                        Phân loại hàng: {{ getVariantLabel(review.product_variant) }}
+                      </span>
                     </div>
-                    <p class="text-sm text-primary mt-2 leading-relaxed">{{ review.comment }}</p>
+                    <p class="text-sm text-gray-700 mt-2 leading-relaxed">{{ review.comment }}</p>
 
                     <!-- Review images -->
                     <div v-if="review.images?.length" class="flex flex-wrap gap-2 mt-3">
@@ -302,19 +325,21 @@
                       />
                     </div>
 
-                    <!-- Seller reply -->
-                    <div v-if="review.sellerReply" class="bg-gray-50 rounded px-4 py-3 mt-3 text-sm text-gray-600">
-                      <div class="font-medium text-gray-700 mb-1">Phản Hồi Của Người Bán</div>
-                      {{ review.sellerReply }}
-                    </div>
-
                     <!-- Likes row -->
                     <div class="flex items-center justify-between mt-3">
-                      <button type="button" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition">
-                        <iconify-icon icon="material-symbols:thumb-up-outline" width="16" height="16"></iconify-icon>
-                        <span>{{ review.likes }}</span>
+                      <button
+                        type="button"
+                        class="flex items-center gap-1.5 text-xs transition cursor-pointer"
+                        :class="review.liked_by_current_user ? 'text-primary' : 'text-gray-400 hover:text-gray-600'"
+                        @click="toggleLike(review)"
+                      >
+                        <iconify-icon
+                          :icon="review.liked_by_current_user ? 'material-symbols:thumb-up' : 'material-symbols:thumb-up-outline'"
+                          width="16" height="16"
+                        ></iconify-icon>
+                        <span>{{ review.like_count }}</span>
                       </button>
-                      <button type="button" class="text-gray-300 hover:text-gray-500 transition">
+                      <button type="button" class="text-gray-300 hover:text-gray-500 transition" aria-label="Thêm tùy chọn">
                         <iconify-icon icon="material-symbols:more-vert" width="18" height="18"></iconify-icon>
                       </button>
                     </div>
@@ -323,14 +348,16 @@
               </div>
             </div>
 
-            <!-- Load more (stub) -->
-            <div v-if="visibleReviews.length < filteredReviews.length" class="mt-4 flex justify-center">
+            <!-- Load more -->
+            <div v-if="hasMoreReviews" class="mt-4 flex justify-center">
               <button
                 type="button"
-                class="px-8 py-2 border border-gray-200 text-sm text-gray-600 hover:border-primary hover:text-primary transition"
-                @click="reviewPage++"
+                :disabled="reviewsLoading"
+                class="px-8 py-2 border border-gray-200 text-sm text-gray-600 hover:border-primary hover:text-primary transition disabled:opacity-50"
+                @click="loadMoreReviews"
               >
-                Xem thêm đánh giá
+                <a-spin v-if="reviewsLoading" :spinning="true" size="small" class="mr-2" />
+                <span>Xem thêm đánh giá</span>
               </button>
             </div>
           </div>
@@ -481,20 +508,9 @@ import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import { LeftCircleOutlined, RightCircleOutlined } from '@ant-design/icons-vue'
 import { Product, productService } from '@/services/product/productService'
+import { ProductReview, ReviewVariantInfo, reviewService } from '@/services/product/reviewService'
+import { getAccessToken } from '@/core'
 import { useCartStore } from '@/stores/cartStore'
-
-interface Review {
-  id: number
-  username: string
-  avatar: string
-  rating: number
-  date: string
-  variant: string
-  comment: string
-  images: string[]
-  sellerReply: string
-  likes: number
-}
 
 const props = defineProps<{ productId?: number | string }>()
 const router = useRouter()
@@ -599,123 +615,102 @@ const zoomPreviewStyle = computed(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Review state ─────────────────────────────────────────────────────────────
-const activeReviewFilter = ref<string>('all')
-const reviewPage = ref(1)
-const PAGE_SIZE = 5
+const REVIEW_PAGE_LIMIT = 5
 
-const reviewMeta = {
-  overall: 4.6,
-  breakdown: [
-    { stars: 5, count: 115 },
-    { stars: 4, count: 14 },
-    { stars: 3, count: 4 },
-    { stars: 2, count: 1 },
-    { stars: 1, count: 7 },
-  ],
-  withComment: 46,
-  withMedia: 32,
-  total: 141,
-}
+const reviews = ref<ProductReview[]>([])
+const reviewsLoading = ref(false)
+const afterCursor = ref<string | null>(null)
+const hasMoreReviews = ref(false)
+const activeReviewFilter = ref<number | null>(null)
 
 const reviewFilters = [
-  { key: 'all',     label: `Tất Cả (${reviewMeta.total})` },
-  ...reviewMeta.breakdown.map(b => ({ key: String(b.stars), label: `${b.stars} Sao (${b.count})` })),
-  { key: 'comment', label: `Có Bình Luận (${reviewMeta.withComment})` },
-  { key: 'media',   label: `Có Hình Ảnh / Video (${reviewMeta.withMedia})` },
+  { key: null,  label: 'Tất Cả' },
+  { key: 5,     label: '5 Sao' },
+  { key: 4,     label: '4 Sao' },
+  { key: 3,     label: '3 Sao' },
+  { key: 2,     label: '2 Sao' },
+  { key: 1,     label: '1 Sao' },
 ]
 
-const mockReviews: Review[] = [
-  {
-    id: 1,
-    username: 'vidoipxhvr382',
-    avatar: 'https://i.pravatar.cc/40?img=11',
-    rating: 5,
-    date: '2025-09-26 09:11',
-    variant: 'Đen',
-    comment: 'Cặp đẹp và rộng lắm nha. Đựng tha hồ đồ luôn ạ. Cũng có nhiều ngăn tiện lợi. Giá rẻ chất lượng okiiiiiii la. Mọi người mua đi nha. Không thất vọng nè',
-    images: ['1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX', '1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX', '1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX'],
-    sellerReply: 'Chúng tôi đã nhận được đánh giá tốt của bạn, chúng tôi rất vinh dự khi nhận được sự khẳng định của bạn và rất mong được phục vụ bạn một lần nữa.',
-    likes: 4,
-  },
-  {
-    id: 2,
-    username: 'nguynnhth980',
-    avatar: 'https://i.pravatar.cc/40?img=22',
-    rating: 5,
-    date: '2025-10-21 11:46',
-    variant: 'Xám, Đen',
-    comment: 'Balo đẹp lắm luôn ạ. Vải dày dặn, chắc chắn, có chống nước ít it. Balo cũng đứng form lắm ạ. Shop thân thiện cực luôn. Giá mình sắp sale được nên rẻ lắm. Mn nên mua ạ.',
-    images: ['1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX', '1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX', '1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX', '1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX', '1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX'],
-    sellerReply: 'Quý khách thân mến, rất vui khi quý khách yêu thích sản phẩm của chúng tôi, đánh giá tốt của bạn là động lực lớn của shop. Chúc quý khách một ngày vui vẻ ạ.',
-    likes: 0,
-  },
-  {
-    id: 3,
-    username: 'thanh_tung_99',
-    avatar: 'https://i.pravatar.cc/40?img=33',
-    rating: 4,
-    date: '2025-11-05 14:22',
-    variant: 'Trắng, M',
-    comment: 'Sản phẩm tốt, đúng mô tả. Giao hàng nhanh. Sẽ ủng hộ shop lần sau.',
-    images: [],
-    sellerReply: 'Cảm ơn bạn đã tin tưởng lựa chọn sản phẩm của shop. Hẹn gặp lại bạn!',
-    likes: 2,
-  },
-  {
-    id: 4,
-    username: 'minhphuong_2002',
-    avatar: 'https://i.pravatar.cc/40?img=44',
-    rating: 5,
-    date: '2025-12-01 08:05',
-    variant: 'Đen, L',
-    comment: 'Chất liệu mềm mại, form đẹp. Mua cho bạn trai làm quà, anh ấy rất thích. Cảm ơn shop!',
-    images: ['1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX', '1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX'],
-    sellerReply: '',
-    likes: 7,
-  },
-  {
-    id: 5,
-    username: 'hoanglong_shop',
-    avatar: 'https://i.pravatar.cc/40?img=55',
-    rating: 3,
-    date: '2026-01-10 17:30',
-    variant: 'Vàng, S',
-    comment: 'Màu hơi khác so với ảnh một chút nhưng nhìn chung ổn. Vải cũng tạm được.',
-    images: [],
-    sellerReply: 'Xin lỗi vì sự bất tiện. Màu sắc thực tế có thể chênh lệch nhẹ do ánh sáng chụp. Shop rất mong bạn thông cảm ạ.',
-    likes: 1,
-  },
-  {
-    id: 6,
-    username: 'lethikimanh',
-    avatar: 'https://i.pravatar.cc/40?img=66',
-    rating: 5,
-    date: '2026-02-14 10:00',
-    variant: 'Đen, M',
-    comment: 'Mua lần 3 rồi, lần nào cũng ưng. Shop giữ được chất lượng rất tốt!',
-    images: ['1sV1Ztb0yrUFuLZxArRMLMcXK8BJ9n1EX'],
-    sellerReply: 'Cảm ơn bạn đã tin tưởng và mua hàng lặp lại! Đây là động lực lớn nhất của shop.',
-    likes: 12,
-  },
-]
-
-const filteredReviews = computed(() => {
-  switch (activeReviewFilter.value) {
-    case 'all':     return mockReviews
-    case 'comment': return mockReviews.filter(r => r.comment?.length > 0)
-    case 'media':   return mockReviews.filter(r => r.images?.length > 0)
-    default: {
-      const stars = Number(activeReviewFilter.value)
-      return isNaN(stars) ? mockReviews : mockReviews.filter(r => r.rating === stars)
-    }
-  }
+const reviewAvg = computed(() => {
+  if (!reviews.value.length) return '0'
+  const sum = reviews.value.reduce((acc, r) => acc + r.star_rating, 0)
+  return (sum / reviews.value.length).toFixed(1)
 })
 
-const visibleReviews = computed(() =>
-  filteredReviews.value.slice(0, reviewPage.value * PAGE_SIZE)
-)
+function getVariantLabel(variant: ReviewVariantInfo): string {
+  if (!variant?.tierIndex?.length) return ''
+  return variant.tierIndex
+    .map((idx, i) => variant.tierVariations[i]?.options[idx - 1] ?? '')
+    .filter(Boolean)
+    .join(', ')
+}
 
-watch(activeReviewFilter, () => { reviewPage.value = 1 })
+function formatReviewDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('vi-VN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+async function loadReviews(reset = false) {
+  if (!product.value) return
+  if (reset) {
+    reviews.value = []
+    afterCursor.value = null
+    hasMoreReviews.value = false
+  }
+  reviewsLoading.value = true
+  try {
+    const sentAfter = afterCursor.value
+    const result = await reviewService.list(product.value.id, {
+      limit: REVIEW_PAGE_LIMIT,
+      ...(activeReviewFilter.value !== null && { star: activeReviewFilter.value }),
+      ...(sentAfter ? { after: sentAfter } : {}),
+    })
+    reviews.value = reset ? result.reviews : [...reviews.value, ...result.reviews]
+    if (result.after !== null && result.after !== sentAfter) {
+      afterCursor.value = result.after
+      hasMoreReviews.value = true
+    } else {
+      hasMoreReviews.value = false
+    }
+  } catch {
+    // non-critical: reviews section failure shouldn't block the page
+  } finally {
+    reviewsLoading.value = false
+  }
+}
+
+function loadMoreReviews() {
+  loadReviews(false)
+}
+
+function setReviewFilter(key: number | null) {
+  activeReviewFilter.value = key
+  loadReviews(true)
+}
+
+async function toggleLike(review: ProductReview) {
+  if (!getAccessToken()) {
+    message.warning('Vui lòng đăng nhập để thích đánh giá')
+    return
+  }
+  const wasLiked = review.liked_by_current_user
+  review.liked_by_current_user = !wasLiked
+  review.like_count += wasLiked ? -1 : 1
+  try {
+    if (wasLiked) {
+      await reviewService.unlike(review.id)
+    } else {
+      await reviewService.like(review.id)
+    }
+  } catch {
+    review.liked_by_current_user = wasLiked
+    review.like_count += wasLiked ? 1 : -1
+  }
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
@@ -728,6 +723,7 @@ onMounted(async () => {
   loading.value = true
   try {
     product.value = await productService.fetchById(Number(props.productId))
+    loadReviews(true)
   } catch {
     message.error('Không tải được thông tin sản phẩm')
   } finally {
@@ -897,7 +893,8 @@ function checkCartOverflow(): boolean {
 async function addToCart() {
   showTierError.value = true
   if (!canPurchase.value) {
-    checkTierSelection() || message.warning('Sản phẩm hiện đã hết hàng')
+    if (!checkTierSelection()) return
+    message.warning('Sản phẩm hiện đã hết hàng')
     return
   }
   if (!checkCartOverflow() || !product.value) return
@@ -916,7 +913,8 @@ async function addToCart() {
 async function buyNow() {
   showTierError.value = true
   if (!canPurchase.value) {
-    checkTierSelection() || message.warning('Sản phẩm hiện đã hết hàng')
+    if (!checkTierSelection()) return
+    message.warning('Sản phẩm hiện đã hết hàng')
     return
   }
   if (!checkCartOverflow() || !product.value) return

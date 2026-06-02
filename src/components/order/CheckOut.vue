@@ -34,7 +34,7 @@
             Mặc Định
           </a-tag>
           <button
-              class="text-sky-500 hover:text-sky-600 text-sm font-medium cursor-pointer"
+              class="text-primary hover:text-primary-dark text-sm font-medium cursor-pointer"
               @click="openAddressPicker"
           >
             Thay Đổi
@@ -107,7 +107,7 @@
         </div>
 
         <!-- Note + shipping row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 px-6 py-4 border-t border-dashed border-gray-200 bg-[#fafdff]">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 px-6 py-4 border-t border-dashed border-gray-200 bg-gray-50">
           <div class="flex items-center gap-3">
             <span class="text-sm text-gray-600 flex-shrink-0">Lời nhắn:</span>
             <a-input
@@ -124,7 +124,7 @@
               </p>
               <p class="text-xs text-gray-500 mt-1 m-0">{{ shipping.eta }}</p>
             </div>
-            <button class="text-sky-500 hover:text-sky-600 text-sm font-medium cursor-pointer" @click="shippingModalOpen = true">
+            <button class="text-primary hover:text-primary-dark text-sm font-medium cursor-pointer" @click="shippingModalOpen = true">
               Thay Đổi
             </button>
             <div class="text-right text-sm text-gray-700">
@@ -146,7 +146,7 @@
           <iconify-icon icon="material-symbols:confirmation-number-outline" width="22" height="22" class="text-primary"></iconify-icon>
           <span class="font-medium">Voucher của Shop</span>
         </div>
-        <button class="text-sky-500 hover:text-sky-600 text-sm font-medium cursor-pointer" @click="onPickVoucher">
+        <button class="text-primary hover:text-primary-dark text-sm font-medium cursor-pointer" @click="onPickVoucher">
           {{ voucher ? `Đã chọn: ${voucher.title}` : 'Chọn Voucher' }}
         </button>
       </div>
@@ -188,7 +188,7 @@
         <div class="border-t border-gray-100 mt-4 pt-4 flex items-center justify-between gap-4 flex-wrap">
           <p class="text-xs text-gray-500 m-0 max-w-2xl">
             Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo
-            <a class="text-sky-500">Điều khoản GIADE</a>.
+            <a class="text-primary">Điều khoản GIADE</a>.
           </p>
           <a-button
               type="primary"
@@ -410,8 +410,8 @@ const doPlaceOrder = async () => {
     )
     message.success('Đặt hàng thành công!')
     checkoutStore.clear()
-    cartStore.loadCart(true)
-    router.push(`/order/success/${order?.id ?? ''}`)
+    await cartStore.loadCart(true)
+    router.push(`/order/success/${order?.alias ?? ''}`)
   } catch {
     message.error('Đặt hàng thất bại, vui lòng thử lại')
   } finally {

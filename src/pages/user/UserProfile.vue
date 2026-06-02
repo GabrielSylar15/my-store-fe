@@ -19,8 +19,8 @@
 import { onMounted } from 'vue'
 import AuthHeader from '@/components/AuthHeader.vue'
 import Footer from '@/components/Footer.vue'
-import UserSidebar from '@/components/users/UserSidebar.vue'
-import BuyerProfile from '@/components/users/BuyerProfile.vue'
+import UserSidebar from '@/components/user/UserSidebar.vue'
+import BuyerProfile from '@/components/user/BuyerProfile.vue'
 
 onMounted(() => { document.title = 'Hồ Sơ Của Tôi | GIADE' })
 </script>

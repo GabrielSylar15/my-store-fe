@@ -30,7 +30,7 @@
           </div>
         </a-radio>
         <div class="flex flex-col items-end gap-2 flex-shrink-0">
-          <button class="text-sky-500 hover:text-sky-600 text-sm cursor-pointer" @click="emit('edit', addr)">
+          <button class="text-primary hover:text-primary-dark text-sm cursor-pointer" @click="emit('edit', addr)">
             Cập nhật
           </button>
           <button
@@ -95,9 +95,13 @@ const onConfirm = () => {
 }
 
 const onRemove = async (id: number) => {
-  await addressService.remove(id)
-  message.success('Đã xóa địa chỉ')
-  await load()
+  try {
+    await addressService.remove(id)
+    message.success('Đã xóa địa chỉ')
+    await load()
+  } catch (err: any) {
+    message.info(err?.message ?? 'Tính năng đang được phát triển')
+  }
 }
 
 defineExpose({ reload: load })

@@ -18,49 +18,28 @@
             :wrapper-col="{ span: 18 }"
             :colon="false"
         >
-          <a-form-item label="Tên đăng nhập">
-            <span class="text-sm text-gray-700">{{ form.username }}</span>
-          </a-form-item>
-
-          <a-form-item label="Tên" name="full_name">
-            <a-input v-model:value="form.full_name" placeholder="Nhập tên hiển thị" :maxlength="80" />
-          </a-form-item>
-
           <a-form-item label="Email">
-            <div class="flex items-center gap-3">
-              <span class="text-sm text-gray-700">{{ form.email || 'Chưa cập nhật' }}</span>
-              <button class="text-sm text-sky-500 hover:text-sky-600 cursor-pointer" @click.prevent="onChangeEmail">
-                Thay Đổi
-              </button>
-            </div>
+            <span class="text-sm text-gray-700">{{ profile?.email || '—' }}</span>
           </a-form-item>
 
-          <a-form-item label="Số điện thoại">
-            <div class="flex items-center gap-3">
-              <span class="text-sm text-gray-700">{{ form.phone_number || 'Chưa cập nhật' }}</span>
-              <button class="text-sm text-sky-500 hover:text-sky-600 cursor-pointer" @click.prevent="onChangePhone">
-                Thay Đổi
-              </button>
-            </div>
+          <a-form-item label="Họ và tên" name="name">
+            <a-input v-model:value="form.name" placeholder="Nhập tên hiển thị" :maxlength="80" />
           </a-form-item>
 
-          <a-form-item label="Giới tính">
-            <a-radio-group v-model:value="form.gender">
-              <a-radio value="male">Nam</a-radio>
-              <a-radio value="female">Nữ</a-radio>
-              <a-radio value="other">Khác</a-radio>
-            </a-radio-group>
+          <a-form-item label="Số điện thoại" name="phone_number">
+            <a-input v-model:value="form.phone_number" placeholder="VD: 0989902069" :maxlength="15" />
           </a-form-item>
 
-          <a-form-item label="Ngày sinh">
-            <a-date-picker
-                v-model:value="birthdayProxy"
-                placeholder="Chọn ngày sinh"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                :disabled-date="isFutureDate"
-                class="!w-full max-w-[260px]"
-            />
+          <a-form-item label="Địa chỉ" name="address">
+            <a-input v-model:value="form.address" placeholder="Số nhà, tên đường" :maxlength="200" />
+          </a-form-item>
+
+          <a-form-item label="Tỉnh / Thành phố" name="city">
+            <a-input v-model:value="form.city" placeholder="VD: Hà Nội" :maxlength="100" />
+          </a-form-item>
+
+          <a-form-item label="Quận / Huyện" name="district">
+            <a-input v-model:value="form.district" placeholder="VD: Hai Bà Trưng" :maxlength="100" />
           </a-form-item>
 
           <a-form-item :wrapper-col="{ offset: 6, span: 18 }">
@@ -79,7 +58,7 @@
         <!-- ===== Right: avatar ===== -->
         <div class="flex flex-col items-center border-l border-gray-100 pl-8">
           <img
-              :src="form.avatar_url || DEFAULT_AVATAR"
+              :src="avatarSrc"
               class="w-28 h-28 rounded-full object-cover border border-gray-200 mb-4"
               alt="Ảnh đại diện"
               @error="onAvatarError"
@@ -105,46 +84,53 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import dayjs, { type Dayjs } from 'dayjs'
-import { userService, type UserProfile } from '@/services/user/userService'
+import { userService, type UserProfile, type UserProfilePatch } from '@/services/user/userService'
+import { fileService } from '@/services/file/fileService'
+import { useUserStore } from '@/stores/userStore'
+import { getImageUrl } from '@/helpers/format'
 
 const DEFAULT_AVATAR = 'https://placehold.co/160x160?text=Avatar'
-const MAX_AVATAR_BYTES = 1024 * 1024 // 1 MB
+const MAX_AVATAR_BYTES = 1024 * 1024
 
 const formRef = ref<any>(null)
 const avatarInputRef = ref<HTMLInputElement | null>(null)
 const loading = ref(true)
 const saving = ref(false)
+const userStore = useUserStore()
+const profile = ref<UserProfile | null>(null)
 
-const form = reactive<UserProfile>({
-  username: '',
-  full_name: '',
-  email: '',
-  phone_number: '',
-  gender: null,
-  birthday: '',
-  avatar_url: '',
+const form = reactive<UserProfilePatch>({
+  name: '',
+  phone_number: null,
+  address: null,
+  city: null,
+  district: null,
+  avatar: null,
 })
 
+const avatarSrc = computed(() => form.avatar ? getImageUrl(form.avatar) : DEFAULT_AVATAR)
+
 const rules = {
-  full_name: [
+  name: [
     { required: true, message: 'Vui lòng nhập tên', trigger: 'blur' },
     { min: 2, max: 80, message: 'Tên phải từ 2 đến 80 ký tự', trigger: 'blur' },
   ],
 }
 
-// AntD DatePicker works with Dayjs; bridge it to the ISO string we store.
-const birthdayProxy = computed<Dayjs | null>({
-  get: () => (form.birthday ? dayjs(form.birthday) : null),
-  set: (v: Dayjs | null) => { form.birthday = v ? v.format('YYYY-MM-DD') : '' },
-})
-
-const isFutureDate = (current: Dayjs) => current && current.isAfter(dayjs().endOf('day'))
-
 const load = async () => {
   loading.value = true
   try {
-    Object.assign(form, await userService.getProfile())
+    profile.value = await userService.getProfile()
+    Object.assign(form, {
+      name: profile.value.name,
+      phone_number: profile.value.phone_number,
+      address: profile.value.address,
+      city: profile.value.city,
+      district: profile.value.district,
+      avatar: profile.value.avatar,
+    })
+  } catch {
+    message.error('Không tải được thông tin hồ sơ')
   } finally {
     loading.value = false
   }
@@ -158,8 +144,17 @@ const onSave = async () => {
   }
   saving.value = true
   try {
-    const { username: _u, ...patch } = form
-    Object.assign(form, await userService.updateProfile(patch))
+    const updated = await userService.updateProfile({ ...form })
+    userStore.setProfile(updated)
+    if (profile.value) Object.assign(profile.value, updated)
+    Object.assign(form, {
+      name: updated.name,
+      phone_number: updated.phone_number,
+      address: updated.address,
+      city: updated.city,
+      district: updated.district,
+      avatar: updated.avatar,
+    })
     message.success('Cập nhật hồ sơ thành công')
   } catch {
     message.error('Cập nhật hồ sơ thất bại, vui lòng thử lại')
@@ -168,33 +163,29 @@ const onSave = async () => {
   }
 }
 
-const onChangeEmail = () => message.info('Tính năng đổi email đang được phát triển')
-const onChangePhone = () => message.info('Tính năng đổi số điện thoại đang được phát triển')
-
 const onPickAvatar = () => avatarInputRef.value?.click()
 
 const onAvatarFile = async (e: Event) => {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
-  input.value = '' // allow re-selecting the same file
+  input.value = ''
   if (!file) return
   if (file.size > MAX_AVATAR_BYTES) {
     message.error('Dung lượng ảnh tối đa 1 MB')
     return
   }
-  // Mock upload: read into a base64 data URL and persist.
-  const reader = new FileReader()
-  reader.onload = async () => {
-    const dataUrl = reader.result as string
-    saving.value = true
-    try {
-      Object.assign(form, await userService.updateProfile({ avatar_url: dataUrl }))
-      message.success('Đã cập nhật ảnh đại diện')
-    } finally {
-      saving.value = false
-    }
+  saving.value = true
+  try {
+    const uploaded = await fileService.upload(file)
+    form.avatar = uploaded.id
+    const updated = await userService.updateProfile({ ...form, avatar: uploaded.id })
+    userStore.setProfile(updated)
+    message.success('Đã cập nhật ảnh đại diện')
+  } catch {
+    message.error('Tải ảnh thất bại, vui lòng thử lại')
+  } finally {
+    saving.value = false
   }
-  reader.readAsDataURL(file)
 }
 
 const onAvatarError = (e: Event) => {
@@ -205,7 +196,6 @@ onMounted(load)
 </script>
 
 <style scoped>
-/* Match Shopee's profile form: keep labels grey and content tight on mobile. */
 :deep(.ant-form-item-label > label) {
   color: #6b7280;
   font-size: 13px;
@@ -215,7 +205,6 @@ onMounted(load)
 }
 
 @media (max-width: 768px) {
-  /* Stack label above input on small screens */
   :deep(.ant-form-horizontal .ant-form-item-label) {
     flex: 0 0 100%;
     text-align: left;

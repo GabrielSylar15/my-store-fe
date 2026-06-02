@@ -17,12 +17,12 @@
         ></iconify-icon>
         <h2 class="text-2xl font-medium text-gray-800 mt-3 mb-1">Đặt hàng thành công!</h2>
         <p class="text-gray-500 m-0">
-          Cảm ơn bạn đã mua hàng tại GIADE. Đơn hàng <span class="text-primary font-medium">#{{ order.code }}</span> đang được xử lý.
+          Cảm ơn bạn đã mua hàng tại GIADE. Đơn hàng <span class="text-primary font-medium">#{{ order.alias }}</span> đang được xử lý.
         </p>
 
         <div class="flex justify-center gap-3 mt-6 flex-wrap">
           <a-button size="large" @click="router.push('/')">Tiếp Tục Mua Sắm</a-button>
-          <a-button size="large" type="primary" @click="router.push(`/user/orders/${order.id}`)">
+          <a-button size="large" type="primary" @click="router.push(`/user/orders/${order.alias}`)">
             Xem Chi Tiết Đơn Hàng
           </a-button>
         </div>
@@ -35,46 +35,41 @@
           <span class="text-xs text-gray-500">{{ formatDateTime(order.created_at) }}</span>
         </div>
 
-        <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Shipping -->
-          <div>
-            <p class="text-sm text-gray-500 mb-1 m-0">Địa chỉ nhận hàng</p>
-            <p class="text-sm text-gray-800 font-medium m-0">
-              {{ order.shipping_address.full_name }} ({{ order.shipping_address.phone_number }})
-            </p>
-            <p class="text-sm text-gray-600 mt-1 m-0">
-              {{ order.shipping_address.address }}, {{ order.shipping_address.district }}, {{ order.shipping_address.city }}
-            </p>
-          </div>
-          <!-- Payment + shipping method -->
-          <div>
-            <p class="text-sm text-gray-500 mb-1 m-0">Phương thức thanh toán</p>
-            <p class="text-sm text-gray-800 m-0">{{ PAYMENT_LABEL[order.payment_method] }}</p>
-            <p class="text-sm text-gray-500 mt-3 mb-1 m-0">Phương thức vận chuyển</p>
-            <p class="text-sm text-gray-800 m-0">{{ order.shipping_method.label }} — {{ order.shipping_method.eta }}</p>
-          </div>
+        <div class="px-6 py-4">
+          <p class="text-sm text-gray-500 mb-1 m-0">Địa chỉ nhận hàng</p>
+          <p class="text-sm text-gray-800 font-medium m-0">{{ formatPhone(order.phone_number) }}</p>
+          <p class="text-sm text-gray-600 mt-1 m-0">
+            {{ order.address }}, {{ order.district }}, {{ order.city }}
+          </p>
+          <p v-if="order.note" class="text-sm text-gray-500 mt-2 m-0">Ghi chú: {{ order.note }}</p>
         </div>
 
         <!-- Items -->
         <div class="border-t border-gray-100">
           <div
               v-for="item in order.items"
-              :key="`${item.product_id}-${item.product_variant_id}`"
+              :key="item.product_variant_id"
               class="flex items-center gap-4 px-6 py-4 border-b border-gray-100 last:border-0"
           >
             <img
+                v-if="item.image"
                 :src="getImageUrl(item.image)"
                 class="w-16 h-16 object-cover rounded border border-gray-200 flex-shrink-0"
                 @error="onImgError"
                 alt=""
             />
+            <div v-else class="w-16 h-16 bg-gray-100 rounded border border-gray-200 flex-shrink-0 flex items-center justify-center">
+              <iconify-icon icon="material-symbols:image-not-supported-outline" width="24" height="24" class="text-gray-300"></iconify-icon>
+            </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-800 line-clamp-2 m-0">{{ item.product?.name || `Sản phẩm #${item.product_id}` }}</p>
-              <p class="text-xs text-gray-500 mt-1 m-0">Phân loại: {{ variantLabel(item) }}</p>
+              <p class="text-sm text-gray-800 line-clamp-2 m-0">{{ item.product_name || `Sản phẩm #${item.product_variant_id}` }}</p>
+              <p class="text-xs text-gray-500 mt-1 m-0">
+                Phân loại: {{ item.variants?.length ? item.variants.map(v => v.value).join(', ') : 'Mặc định' }}
+              </p>
               <p class="text-xs text-gray-500 mt-1 m-0">x{{ item.quantity }}</p>
             </div>
-            <div class="text-primary font-medium text-sm flex-shrink-0">
-              {{ currency(item.unit_price * item.quantity) }}
+            <div v-if="item.current_price" class="text-primary font-medium text-sm flex-shrink-0">
+              {{ currency(item.current_price * item.quantity) }}
             </div>
           </div>
         </div>
@@ -83,17 +78,11 @@
         <div class="px-6 py-4 border-t border-dashed border-gray-200">
           <div class="ml-auto max-w-sm space-y-1">
             <div class="flex justify-between text-sm text-gray-600">
-              <span>Tổng tiền hàng</span><span>{{ currency(order.totals.items_subtotal) }}</span>
-            </div>
-            <div class="flex justify-between text-sm text-gray-600">
-              <span>Phí vận chuyển</span><span>{{ currency(order.totals.shipping_fee) }}</span>
-            </div>
-            <div v-if="order.totals.voucher_discount" class="flex justify-between text-sm text-gray-600">
-              <span>Voucher giảm giá</span><span>- {{ currency(order.totals.voucher_discount) }}</span>
+              <span>Tổng tiền hàng</span><span>{{ currency(order.total_price) }}</span>
             </div>
             <div class="flex justify-between items-center pt-2 border-t border-gray-100">
               <span class="text-sm text-gray-600">Tổng thanh toán</span>
-              <span class="text-2xl font-bold text-primary">{{ currency(order.totals.grand_total) }}</span>
+              <span class="text-2xl font-bold text-primary">{{ currency(order.total_bill) }}</span>
             </div>
           </div>
         </div>
@@ -105,18 +94,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { orderService, type Order } from '@/services/order/orderService'
-import { currency, getImageUrl, onImgError, variantLabel, formatDateTime, PAYMENT_LABEL } from './orderHelpers'
+import { orderService, type OrderApiDetail } from '@/services/order/orderService'
+import { currency, getImageUrl, onImgError, formatDateTime, formatPhone } from '@/helpers/format'
 
 const route = useRoute()
 const router = useRouter()
 const loading = ref(true)
-const order = ref<Order | null>(null)
+const order = ref<OrderApiDetail | null>(null)
 
 onMounted(async () => {
-  const id = Number(route.params.id)
-  if (!isNaN(id)) {
-    order.value = await orderService.getById(id)
+  const alias = route.params.alias as string
+  if (alias) {
+    order.value = await orderService.getByAlias(alias)
   }
   loading.value = false
 })

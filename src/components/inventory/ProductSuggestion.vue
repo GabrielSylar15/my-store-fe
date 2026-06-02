@@ -43,13 +43,8 @@
               </h3>
 
               <div class="mt-1 min-h-[20px] flex items-center">
-<!--                <span v-if="product.price_info?.current_price"-->
-<!--                      class="discount-badge">-->
-<!--                  Giảm {{ product.price_info.current_price }}-->
-<!--                </span>-->
-                <span class="bg-[#ff9800] text-red-800 text-xs font-medium me-2 px-1 py-0.5 rounded-sm">
+                <span class="bg-primary text-white text-xs font-medium px-1 py-0.5 rounded-sm">
                   Giảm {{ product.price_info.current_price }}%
-
                 </span>
 
               </div>

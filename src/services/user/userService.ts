@@ -1,53 +1,38 @@
-// NOTE: Mocked — backend profile endpoints not yet wired.
-// Persists to localStorage so the profile UX can be developed end-to-end.
-
-export type Gender = 'male' | 'female' | 'other'
+import { httpClient } from '@/core'
+import { formatPhone, parsePhoneToServer } from '@/helpers/format'
 
 export interface UserProfile {
-  username: string         // readonly handle, e.g. "sylar1505"
-  full_name: string
+  id: number
   email: string
-  phone_number: string
-  gender: Gender | null
-  /** ISO date string, e.g. "1995-04-12". Empty when not set. */
-  birthday: string
-  avatar_url: string
+  name: string
+  phone_number: string | null  // always display format: "0xxxxxxxxx"
+  address: string | null
+  city: string | null
+  district: string | null
+  avatar: string | null
 }
 
-const STORAGE_KEY = 'mock_user_profile'
+export type UserProfilePatch = Partial<Omit<UserProfile, 'id' | 'email'>>
 
-const DEFAULT_PROFILE: UserProfile = {
-  username: 'sylar1505',
-  full_name: 'Nguyễn Thế Vinh',
-  email: 'ne**********@gmail.com',
-  phone_number: '********69',
-  gender: null,
-  birthday: '',
-  avatar_url: 'https://i.pravatar.cc/160?img=8',
-}
-
-function read(): UserProfile {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...DEFAULT_PROFILE, ...JSON.parse(raw) } : { ...DEFAULT_PROFILE }
-  } catch { return { ...DEFAULT_PROFILE } }
-}
-
-function write(p: UserProfile) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p))
+function normalizeProfile(raw: any): UserProfile {
+  return {
+    ...raw,
+    phone_number: raw.phone_number ? formatPhone(raw.phone_number) : null,
+  }
 }
 
 class UserService {
   async getProfile(): Promise<UserProfile> {
-    await new Promise(r => setTimeout(r, 150))
-    return read()
+    const res = await httpClient.get('/api/v1/users')
+    return normalizeProfile(res.data)
   }
 
-  async updateProfile(patch: Partial<Omit<UserProfile, 'username'>>): Promise<UserProfile> {
-    await new Promise(r => setTimeout(r, 200))
-    const next = { ...read(), ...patch }
-    write(next)
-    return next
+  async updateProfile(patch: UserProfilePatch): Promise<UserProfile> {
+    const { phone_number, ...rest } = patch
+    const body: Record<string, unknown> = { ...rest }
+    if (phone_number != null) body.phone_number = parsePhoneToServer(phone_number)
+    const res = await httpClient.put('/api/v1/users', body)
+    return normalizeProfile(res.data)
   }
 }
 

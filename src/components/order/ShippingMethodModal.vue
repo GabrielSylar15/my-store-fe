@@ -40,7 +40,7 @@
           :key="m.label"
           class="method-row w-full text-left px-4 py-4 flex items-start justify-between gap-4 transition cursor-pointer"
           :class="[
-            selectedIdx === i ? 'bg-orange-50' : 'bg-[#fafafa] hover:bg-gray-100',
+            selectedIdx === i ? 'bg-primary/10' : 'bg-gray-50 hover:bg-gray-100',
             m.disabled && 'opacity-60 cursor-not-allowed'
           ]"
           :disabled="m.disabled"

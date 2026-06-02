@@ -7,7 +7,7 @@ import UserOrdersPage from '@/pages/user/UserOrders.vue'
 const orderRoutes = [
   { path: '/cart', name: 'Cart', component: CartPage },
   { path: '/checkout', name: 'CheckOut', component: CheckOutPage },
-  { path: '/order/success/:id', name: 'OrderSuccess', component: OrderSuccessPage },
+  { path: '/order/success/:alias', name: 'OrderSuccess', component: OrderSuccessPage },
   { path: '/user/orders', name: 'UserOrders', component: UserOrdersPage },
   { path: '/user/orders/:alias', name: 'OrderDetail', component: OrderDetailPage },
 ]

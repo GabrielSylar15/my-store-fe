@@ -1,6 +1,6 @@
 # CLAUDE.md — my-store-fe
 
-Vue 3 ecommerce frontend (GIADE). Vietnamese UI. Active features: home, product list/search, product detail, Google OAuth login. Stubs (not yet wired): cart, checkout, order detail, admin, user profile.
+Vue 3 ecommerce frontend (GIADE). Vietnamese UI. Active features: home, product list/search, product detail, Google OAuth login, cart, order list, order detail, product reviews. Stubs (not yet wired): checkout, admin, user profile.
 
 ## Memory
 
@@ -65,15 +65,25 @@ src/
     users/auth/BuyerLogin.vue
     users/BuyerProfile.vue       # stub
     users/BuyerRegister.vue      # stub
-    order/OrderDetail.vue        # stub
+    order/
+      Cart.vue                   # full cart with selection, qty controls, delete
+      CheckOut.vue               # checkout flow
+      OrderList.vue              # order history list with tabs, search, actions
+      OrderDetail.vue            # order detail with timeline, actions
+      ReviewModal.vue            # review popup — list of products, inline forms, per-product submit
+      orderHelpers.ts            # shared currency/image/format helpers for order components
   services/
     index.ts                     # re-exports authService, useBannerSlider
     bannerService.ts             # useBannerSlider() composable ← exception to class pattern
     product/productService.ts    # productService singleton
     product/categoryService.ts   # categoryService singleton
+    product/reviewService.ts     # reviewService singleton — list, create, like, unlike, reviewedInOrder
     user/authService.ts          # authService singleton
+    cart/cartService.ts          # cartService singleton — getCart, updateCart
+    order/orderService.ts        # orderService singleton — listOrders, getByAlias, createOrder
   stores/
     searchStore.ts               # useSearchStore — global search text
+    cartStore.ts                 # useCartStore — cart items, totalCount, loadCart, addItem
   core/
     index.ts                     # re-exports utils + auth helpers
     auth/helpers/index.ts        # getAccessToken, setAccessToken, removeToken (localStorage)
@@ -407,7 +417,46 @@ Then read the file: `Read /tmp/screenshot.png`
 - `Runtime.evaluate` may timeout during the first navigate (Chrome fires events before the response is received); this is harmless — the token/navigate still executes.
 - Pages that require auth show "Unauthorized request" toast if the token is missing or expired. Get a fresh token via: `curl -s http://localhost:8080/api/v1/users/auth/login -d '{"email":"...","password":"..."}'` or reuse one from the browser's DevTools → Application → Local Storage → `app_access_token`.
 
+## Cart Behaviour
+
+`cartStore.loadCart()` is called **once at app startup** in `App.vue` (guarded by `getAccessToken()`). The cart count in `AuthHeader` is immediately populated on page load — do **not** add lazy-load calls elsewhere.
+
+**Buy Again** flow (`OrderList` / `OrderDetail`):
+1. Call `cartService.updateCart(items)` with the order's items
+2. Store selected variant keys in `sessionStorage('cart_preselect')` as `JSON.stringify(["${product_id}-${product_variant_id}", ...])` 
+3. Navigate to `/cart`
+4. `Cart.vue` reads `cart_preselect` on mount, removes it, then pre-checks those items once `loading` becomes false
+
+## Order Review Feature
+
+**`ReviewModal.vue`** — opened from both `OrderList` and `OrderDetail` by passing an `OrderApiDetail` prop.
+
+Flow:
+1. On open: deduplicates order items by `product_id` (one review per product per order), calls `reviewedInOrder(alias)` to mark already-reviewed products
+2. Already reviewed → green "Đã đánh giá ✓" card (disabled)
+3. Pending → inline star rating + textarea + "Gửi đánh giá" per product
+4. Each product submits independently via `POST /api/v1/product_reviews`
+
+**`ReviewModal` prop**: accepts `OrderApiDetail | null` (which `OrderApiListItem` satisfies since it extends `OrderApiDetail`).
+
+**Show/hide "Đánh Giá" button**: driven by the backend `reviewable: boolean` field on the order — do **not** add frontend overrides for this logic.
+
 ## Backend API Conventions
+
+### Order APIs
+
+- `GET /api/v1/orders` — params: `status?`, `last_id?` (for pagination)
+- `GET /api/v1/orders/:alias` — order detail
+- `OrderApiItem` includes `product_id` (needed for review API)
+- `OrderApiDetail` / `OrderApiListItem` include `reviewable: boolean` — backend controls this entirely (checks deadline + whether all products are reviewed)
+
+### Review APIs
+
+- `POST /api/v1/product_reviews` — body: `{ product_id, product_variant_id, order_id, star_rating, comment }`. Do **not** send `images` or `video` (not yet supported).
+- `GET /api/v1/product_reviews?product_id=&limit=&star=&after=` — paginated review list
+- `GET /api/v1/product_reviews/reviewed_in_order?order_alias=` — returns `[{ review_id, product_id, product_variant_id }]` for products already reviewed in that order
+- `POST /api/v1/product_reviews/:id/like` / `DELETE /api/v1/product_reviews/:id/like`
+- Review list returns `liked_by_current_user: boolean` (not `liked`) and `like_count: number`
 
 ### ProductVariant `tier_index` is 1-based
 
@@ -445,6 +494,7 @@ Using product-level stock as a clamp max caused the cart "−" button to jump fr
 - `src/core/utils/sample.ts` is an unused prototype client — do not import or modify it.
 - `base.css` and `main.css` are imported but have minimal effect; Tailwind v4 takes over all styling.
 - `bannerService.ts` exports a **composable** (`useBannerSlider()`) instead of a class singleton — the only exception to the service pattern in this project.
-- Pages in `pages/order/` and `pages/admin/` are **empty stubs** with no registered routes yet.
+- Pages in `pages/admin/` are empty stubs with no registered routes yet.
 - `main.js` is plain JavaScript (not `.ts`) — keep it that way.
 - `BuyerRegisterPage.vue` exists under `pages/user/` but its route is not registered in `user.routes.ts`.
+- **Ant Design `show-count` on `<a-textarea>`**: the character counter renders inside the textarea border as an overlay. Any button placed outside the textarea will visually misalign with the counter. Instead, manually show `{{ value.length }} / maxlength` in a separate row alongside the button — both flush with the textarea edges.

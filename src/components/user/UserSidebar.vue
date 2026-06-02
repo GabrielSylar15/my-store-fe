@@ -3,7 +3,8 @@
     <!-- Profile header -->
     <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
       <img
-          :src="avatar"
+          :src="avatarSrc"
+          @error="(e) => (e.target as HTMLImageElement).src = DEFAULT_AVATAR"
           class="w-12 h-12 rounded-full object-cover border border-gray-200"
           alt=""
       />
@@ -53,12 +54,19 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { getImageUrl } from '@/helpers/format'
 
 const route = useRoute()
+const userStore = useUserStore()
 
-const displayName = 'sylar1505'
-const avatar = 'https://i.pravatar.cc/64?img=8'
+const DEFAULT_AVATAR = 'https://placehold.co/64x64?text=U'
+const avatarSrc = computed(() =>
+  userStore.profile?.avatar ? getImageUrl(userStore.profile.avatar) : DEFAULT_AVATAR
+)
+const displayName = computed(() => userStore.profile?.name || userStore.profile?.email || 'Tài khoản')
 
 const groups: {
   label: string

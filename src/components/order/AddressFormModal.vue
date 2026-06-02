@@ -6,6 +6,7 @@
       :ok-text="isEdit ? 'Cập nhật' : 'Hoàn thành'"
       cancel-text="Hủy"
       :width="600"
+      :z-index="1010"
       centered
       @ok="onSubmit"
       @cancel="emit('close')"
@@ -33,6 +34,10 @@
           <a-input v-model:value="form.district" placeholder="Quận / Huyện" />
         </a-form-item>
       </div>
+
+      <a-form-item label="Phường / Xã" name="ward">
+        <a-input v-model:value="form.ward" placeholder="Phường / Xã" />
+      </a-form-item>
 
       <a-form-item label="Địa chỉ cụ thể" name="address">
         <a-textarea
@@ -73,6 +78,7 @@ const form = reactive({
   phone_number: '',
   city: '',
   district: '',
+  ward: '',
   address: '',
   is_default: false,
 })
@@ -113,6 +119,7 @@ watch(
         phone_number: props.initial.phone_number,
         city: props.initial.city,
         district: props.initial.district,
+        ward: props.initial.ward ?? '',
         address: props.initial.address,
         is_default: props.initial.is_default,
       })
@@ -123,6 +130,7 @@ watch(
         phone_number: '',
         city: '',
         district: '',
+        ward: '',
         address: '',
         is_default: false,
       })
@@ -139,16 +147,16 @@ const onSubmit = async () => {
   }
   submitting.value = true
   try {
-    let saved: UserAddress | null
+    let saved: UserAddress
     if (isEdit.value && props.initial) {
-      saved = await addressService.update(props.initial.id, { ...form })
+      saved = await addressService.update(props.initial.id, { ...form }) as UserAddress
     } else {
       saved = await addressService.create({ ...form })
     }
-    if (saved) {
-      message.success(isEdit.value ? 'Đã cập nhật địa chỉ' : 'Đã thêm địa chỉ mới')
-      emit('saved', saved)
-    }
+    message.success(isEdit.value ? 'Đã cập nhật địa chỉ' : 'Đã thêm địa chỉ mới')
+    emit('saved', saved)
+  } catch (err: any) {
+    message.error(err?.message ?? 'Không thể lưu địa chỉ')
   } finally {
     submitting.value = false
   }
